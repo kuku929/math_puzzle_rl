@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.22)
+project(rl)
+include_directories(include/)
+add_library(functions_for_rl functions_for_rl.cpp)
+add_executable(rl rl.cpp)
+target_link_libraries(rl functions_for_rl)
