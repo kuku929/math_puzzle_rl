@@ -11,9 +11,9 @@ to run the code locally, follow the given instructions:
 5) you will now see an executable named rl
 6) run the code using ./rl -p -t (float) -i (input filename)
 
-allowed flags to be used:
+Allowed flags:
 
--p : one can use an existing policy by putting this flage while running, 
+-p : one can use an existing policy by putting this flag while running, 
      keep in mind the policy must be stored in the same directory as the executable and should be named "policy.txt"
      
 -t : specifies the threshold for training the model, default value is 100.0. Pass this flag if you want to train the model further.
