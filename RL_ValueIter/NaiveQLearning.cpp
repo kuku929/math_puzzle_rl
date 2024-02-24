@@ -56,9 +56,9 @@ int R(const state &curr_state, const state &next_state, const vector<string> &po
 			}
 			//int min_curr_distance=10;
 			//int min_next_distance=10;
-			//for(int i=15-4*current_row;i>11-4*current_row;i--){
-				//if((int)(((curr_state/POWER[i])%16))!=16-i){
-					//int position=findBlank(curr_state,16-i);
+			//for(int i=4*current_row;i<4*current_row+4;i++){
+				//if(curr_state.compressed_state[i]!=i+1+'A'){
+					//int position=curr_state.find_number(i+1);
 					//int row=(position)/4;
 					//int col=position%4;
 					//int next_distance=abs(row-next_blank_position/4)+abs(col-next_blank_position%4);
@@ -100,23 +100,27 @@ void train(unordered_map<string, vector<state>> &possible_states, vector<float>&
 	 int iter=0;
 	 int index;
 	 float delta=threshold+1;
+	 int no_of_generations=0;
 	 int count=0;
 	 pair<string, float> next_best_state;  
+
 	 while(delta>threshold){
 		 for(auto itr=possible_states.begin();itr!=possible_states.end();itr++){
 			 index=index_map[itr->first];
 			 next_best_state.first = string(16,'A');
 			 next_best_state.second = -1000.0;
 			 state current_state(itr->first);
-			 findMax(current_state, itr->second, value_curr, policy, current_row, next_best_state);
+			 findMax(current_state, itr->second, value_next, policy, current_row, next_best_state);
 
 			 policy[index]=next_best_state.first;
 			 value_next[index]=next_best_state.second;
 		 }
 		 delta = difference(value_next,value_curr);
-		 cout << delta << "\n"<<flush;
+		 //cout << delta << "\n"<<flush;
+		 no_of_generations++;
 		 for(int i=0;i<(int)possible_states.size();i++)value_curr[i]=value_next[i];
 	 }
+	 cout << no_of_generations << '\n';
 	 if(save_file){
 		string policy_filename;
 		string value_filename;

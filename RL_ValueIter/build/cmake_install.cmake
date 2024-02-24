@@ -1,4 +1,4 @@
-# Install script for directory: /home/krutarth/Desktop/code/math_dc_project/math_puzzle_rl/rl_v3
+# Install script for directory: /home/krutarth/Desktop/code/math_dc_project/math_puzzle_rl/RL_ValueIter
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/krutarth/Desktop/code/math_dc_project/math_puzzle_rl/rl_v3/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/krutarth/Desktop/code/math_dc_project/math_puzzle_rl/RL_ValueIter/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

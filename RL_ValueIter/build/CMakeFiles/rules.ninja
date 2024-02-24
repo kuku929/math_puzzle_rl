@@ -80,7 +80,7 @@ rule CUSTOM_COMMAND
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = /usr/bin/cmake --regenerate-during-build -S/home/krutarth/Desktop/code/math_dc_project/math_puzzle_rl/rl_v3 -B/home/krutarth/Desktop/code/math_dc_project/math_puzzle_rl/rl_v3/build
+  command = /usr/bin/cmake --regenerate-during-build -S/home/krutarth/Desktop/code/math_dc_project/math_puzzle_rl/RL_ValueIter -B/home/krutarth/Desktop/code/math_dc_project/math_puzzle_rl/RL_ValueIter/build
   description = Re-running CMake...
   generator = 1
 
