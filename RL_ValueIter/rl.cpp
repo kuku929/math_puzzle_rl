@@ -9,13 +9,14 @@
 #include <bitset>
 #include <cmath>
 #include <unistd.h>
+#include <chrono>
 unordered_map<string, int> index_map;
 unordered_map<string,vector<state>> possible_states;
 using namespace std;
 #define MAX_PRIME 524160 
 
 int main(int argc, char **argv){
-
+	//auto start = chrono::high_resolution_clock::now();
 	string input_filename;
 	int input_flag=0;
 	int flag=0;
@@ -63,7 +64,6 @@ int main(int argc, char **argv){
 	}
 
 	if(flag){
-		cout << "IN";
 		ifstream fin("policy.txt");
 		ifstream ffin("index_map.txt");
 		ifstream fffin("value.txt");	
@@ -91,7 +91,10 @@ int main(int argc, char **argv){
 			}
 			policy[index++]=policy_val;
 			ffin>>state_val>>corresponding_index;
-			if(train_flag)fffin>>value_curr[index-1];
+			if(train_flag){
+				fffin>>value_curr[index-1];
+				fffin>>value_next[index-1];
+			}
 			index_map.emplace(state_val, corresponding_index);
 		}
 		fin.close();
@@ -123,7 +126,9 @@ int main(int argc, char **argv){
 		beautiful_print(arr);	
 		cout << "total moves: "<<no_of_moves<<'\n';
 	}
-
+	//auto end = chrono::high_resolution_clock::now();
+	//chrono::duration<double> duration = end-start;
+	//cout<<duration.count()<<'\n';
 	return 0;
 }
 

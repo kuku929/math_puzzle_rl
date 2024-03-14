@@ -84,9 +84,9 @@ void Network::fit(const vector<float> &input, const float true_output, const flo
 		output[i]=weighted_sum; //y0	
 	}
 	if(verbose){
-		cout << "prediction: ";
+		cout << "\nprediction: ";
 		for(auto t: output)cout << t<<' ';
-		cout << "\n\n";
+		cout << "\n";
 	}
 
 	//backpropagation
@@ -100,8 +100,13 @@ void Network::fit(const vector<float> &input, const float true_output, const flo
 	}
 	delta_theta=delta*learning_rate; //delta bias of output layer
 	this->bias[1][action]+=delta_theta; //updating the bias
+	//if(verbose){
+		//cout << "bias: ";
+		//for(auto b: this->bias[1])cout << b<<' ';
+		//cout << '\n';
+	//}
 	for(int j=0;j<hidden_size;j++){
-		delta_weight = learning_rate*delta*hidden_output[j]; 
+		delta_weight = delta_theta*hidden_output[j]; 
 		delta_weights.push_back(delta_weight);
 	}
 
@@ -111,7 +116,7 @@ void Network::fit(const vector<float> &input, const float true_output, const flo
 		delta_theta=hidden_delta*learning_rate; //delta bias of hidden layer
 		this->bias[0][i]+=delta_theta; //update bias
 		for(int k=0;k<input_size;k++){
-			delta_weight=learning_rate*hidden_delta*input[k];
+			delta_weight=delta_theta*input[k];
 			this->weights[0][i*input_size+k]+=delta_weight; //updating weights
 		}
 	}

@@ -12,7 +12,7 @@ using namespace std;
 #define MAX_PRIME 524160 
 
 bool isFinal(const state& given_state){
-	for(int i=0;i<16;i++){
+	for(int i=0;i<15;i++){
 		if(given_state.compressed_state[i]!=i+1+'A')return false;
 	}
 

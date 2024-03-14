@@ -61,20 +61,41 @@ void beautiful_print(int arr[16]){
 	return;
 }
 
-int main(){
+int main(int argc, char **argv){
+	if(argc==1){
+		cout << "enter the size\n";
+		return 0;
+	}
 	int a[16];
 	for(int i=0;i<15;i++)a[i]=i+1;
 	a[15]=0;
 	int blank_position = 15;
 	vector<int> action_space;	
+	int size=atoi(argv[1]);
+	int no_of_moves=1;
+	int max_repititions=5;
 	ofstream fout("train.txt");
-	for(int j=0;j<1000;j++){
-		for(int i=0;i<100;i++){
+	int prev_action=0;
+	for(int j=0;j<size;j++){
+		for(int i=0;i<15;i++)a[i]=i+1;
+		a[15]=0;
+		blank_position=15;
+		for(int i=0;i<no_of_moves;i++){
 			action_space=possible_moves(blank_position);
 			int action = rand()%action_space.size();
+			if(abs(prev_action-action_space[action])==2){
+				continue;
+				i--;
+			}
 			move(a, action_space[action], blank_position);
+			prev_action=action_space[action];
 		}
+		no_of_moves=1+(j*100)/size;
+		//for(int k=0;k<max_repititions;k++){
 		for(int i=0;i<16;i++)fout<<(char)(a[i]+'A');
 		fout<<'\n';
+		//beautiful_print(a);
+		//}
+		//max_repititions=5-(j*5)/size;
 	}
 }
