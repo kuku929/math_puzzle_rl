@@ -27,7 +27,11 @@ Network::Network(int input_size, int hidden_size, int output_size):input_size(in
 	for(int i=0;i<output_size;i++)bias[1].push_back(0.0);
 
 }
-	
+
+Network::Network(int input_size, int hidden_size, int output_size, vector<vector<float>> weights, vector<vector<float>> bias):input_size(input_size), hidden_size(hidden_size), output_size(output_size){
+	this->weights=weights;
+	this->bias=bias;
+}
 vector<float> Network::predict(const vector<float> &input){
 	vector<float> hidden_output(hidden_size, 0.0);
 	vector<float> output(output_size, 0.0);

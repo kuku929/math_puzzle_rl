@@ -82,12 +82,13 @@ void actor::learn(int verbose){
 		input=normalize(random_state.first); //normalizing input
 		this->actor_net.fit(input, target_value, this->learning_rate, random_state.second, verbose); //learning using back propagation 
 	}
-	if(verbose)cout << "------learned--------\n\n";
+	if(verbose)cout<< "------learned--------\n\n";
 }
 
 void actor::end_learn(int verbose){
 	if(verbose)cout << "learning the last states\n";
-	int initial_size = this->experience_replay.size(); if(initial_size==0){
+	int initial_size = this->experience_replay.size(); 
+	if(initial_size==0){
 		cout << "no memory!\n";
 		return;
 	}
@@ -114,8 +115,8 @@ void actor::print_weights(){
 	for(const auto t: this->actor_net.weights[0]){
 		if(count%(input_size)<input_size-1)cout << t<<' ';
 		if(count%input_size==input_size-1){
-			cout << "bias: " << this->actor_net.bias[0][count/input_size]<<'\n'; 
 			cout<< t<<' ';
+			cout << "bias: " << this->actor_net.bias[0][count/input_size]<<'\n'; 
 		}
 		count++;
 	}
@@ -124,12 +125,36 @@ void actor::print_weights(){
 	for(const auto t: this->actor_net.weights[1]){
 		if(count%hidden_size<hidden_size-1)cout << t<<' ';
 		if(count%hidden_size==hidden_size-1){
-			cout << "bias: "<<this->actor_net.bias[1][count/hidden_size]<<'\n'; 
 			cout<< t<<' ';
+			cout << "bias: "<<this->actor_net.bias[1][count/hidden_size]<<'\n'; 
 		}
 		count++;
 	}
 	cout << "\n\n-------weights-end-------\n\n";
+}
+
+void actor::save_weights(string weights_filename){
+	ofstream fout(weights_filename);
+	int count=0;
+	for(const auto t: this->actor_net.weights[0]){
+		if(count%(input_size)<input_size-1)fout << t<<' ';
+		if(count%input_size==input_size-1){
+			fout<< t<<' ';
+			fout << "bias: " << this->actor_net.bias[0][count/input_size]<<'\n'; 
+		}
+		count++;
+	}
+	fout << "second\n";
+	count=0;
+	for(const auto t: this->actor_net.weights[1]){
+		if(count%hidden_size<hidden_size-1)fout << t<<' ';
+		if(count%hidden_size==hidden_size-1){
+			fout<< t<<' ';
+			fout << "bias: "<<this->actor_net.bias[1][count/hidden_size]<<'\n'; 
+		}
+		count++;
+	}
+	fout.close();
 }
 void actor::print_target_weights(){
 	cout << "first layer:\n";

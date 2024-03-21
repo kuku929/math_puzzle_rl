@@ -62,8 +62,8 @@ void beautiful_print(int arr[16]){
 }
 
 int main(int argc, char **argv){
-	if(argc==1){
-		cout << "enter the size\n";
+	if(argc<3){
+		cout << "enter the size and the total moves.\n";
 		return 0;
 	}
 	int a[16];
@@ -72,6 +72,7 @@ int main(int argc, char **argv){
 	int blank_position = 15;
 	vector<int> action_space;	
 	int size=atoi(argv[1]);
+	int total_moves=atoi(argv[2]);
 	int no_of_moves=1;
 	int max_repititions=5;
 	ofstream fout("train.txt");
@@ -90,7 +91,7 @@ int main(int argc, char **argv){
 			move(a, action_space[action], blank_position);
 			prev_action=action_space[action];
 		}
-		no_of_moves=1+(j*100)/size;
+		no_of_moves=1+(j*total_moves)/size;
 		//for(int k=0;k<max_repititions;k++){
 		for(int i=0;i<16;i++)fout<<(char)(a[i]+'A');
 		fout<<'\n';

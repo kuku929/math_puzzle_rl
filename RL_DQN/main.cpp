@@ -4,11 +4,25 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <unistd.h>
 float out_of_bounds;
 float in_bound;
 float completion_reward;
-int main(){
-	//defining params
+int main(int argc, char **argv){
+	/*
+	 *flags for weights
+	 */
+	int c, flag=0;
+	while((c=getopt(argc,argv,"w")) != -1){
+		switch(c){
+		case 'w':
+			flag=1;
+			break;
+		}
+	}
+	/*
+	 *defining params
+	 */
 	float epsilon=1.0;
 	float initial_learning_rate=0.09;
 	float min_factor=0.0001;
@@ -20,29 +34,65 @@ int main(){
 	int steps_per_episode=10000;
 	out_of_bounds=-0.5;
 	//in_bound=-out_of_bounds/4.0;
-	completion_reward=2.0;	
+	completion_reward=1.0;	
 	int epoch=0;
 	state curr_state;
 
-	//instantiating the actor
-	actor a(epsilon, initial_learning_rate, batch_size, replay_size, gamma);
+	/*
+	 *instantiating the actor
+	 */
+	vector<vector<float>> weights, bias;
+	vector<float> sub_weights, sub_bias;
+	actor a;
+	if(flag){
+		int curr_index=0;
+		ifstream weights_in("weights.txt");
+		string s;
+		while(weights_in>>s){
+			if(s=="second"){
+				weights.push_back(sub_weights);
+				bias.push_back(sub_bias);
+				sub_weights.clear();
+				sub_bias.clear();
+				continue;
+			}
+			if(s=="bias:"){
+				weights_in>>s;
+				sub_bias.push_back(stof(s));
+				continue;
+			}
+			sub_weights.push_back(stof(s));
+		}
+	weights.push_back(sub_weights);
+	bias.push_back(sub_bias);
+	weights_in.close();
+	actor a_copy(epsilon, initial_learning_rate, batch_size, replay_size, gamma, weights, bias);
+	a=a_copy; //kinda dumb but whatever
+	}
 
-	//loading the training set
-	ifstream fin("../train.txt");
+	else{ 
+		actor a_copy(epsilon, initial_learning_rate, batch_size, replay_size, gamma);
+		a=a_copy;
+	}
+
+	/*
+	 *loading the training set
+	 */
+	ifstream fin("../train.txt");	
 	vector<string> training_set;
 	string s;
 	while(getline(fin,s)){
 		training_set.push_back(s);
 	}
+	fin.close();
 	
-	//training on data
-	//int progress_count=0;	
-	//int update_after=training_set.size()/100;
+	int progress_count=0;	
+	int update_after=training_set.size()/100;
 	for(int l=0;l<3;l++){
 		cout << "round "<<l<<'\n';
 		a.learning_rate=initial_learning_rate;
 		out_of_bounds=-0.5;
-		completion_reward=2.0;
+		completion_reward=1.0;
 		for(auto data: training_set){
 			//if(progress_count%update_after==0)cout << '\r'<<progress_count/update_after<<"%"<<flush;
 			curr_state.compressed_state=data;
@@ -91,6 +141,7 @@ int main(){
 				if(isFinal(curr_state)){
 					cout << "FINAL\n";
 					break;
+					print_state(curr_state);
 				}
 				curr_state = a.act(curr_state, 0);
 				a.learn(verbose);
@@ -102,7 +153,7 @@ int main(){
 					//a.print_target_weights();
 				}
 			}
-			a.end_learn(verbose);
+			a.end_learn(1);
 			cout << "\n\n-------epoch "<< epoch<< " over------\n\n";
 			//cout << "size of exp: "<<a.experience_replay.size()<<'\n';
 			//for(const auto &row: a.actor_net.weights) {
@@ -115,8 +166,10 @@ int main(){
 			//if(epoch==1)break;
 		}
 	}
+	a.save_weights("weights.txt");
+
 	cout << "\n\n-----playing-----\n\n";
-	curr_state.compressed_state="BCDEFGAIJKHLNOPM";
+	curr_state.compressed_state="BCDEFGAHJKLINOPM";
 	curr_state.blank_position=curr_state.find_number(0);
 	a.epsilon=0.0;
 	for(int i=0;i<1000;i++){

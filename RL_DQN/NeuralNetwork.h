@@ -13,6 +13,7 @@ struct Network{
 
 	Network(){};
 	Network(int input_size, int hidden_size, int output_size);
+	Network(int input_size, int hidden_size, int output_size, vector<vector<float>> weights,vector<vector<float>> bias); 
 	
 	vector<float> predict(const vector<float> &input);
 

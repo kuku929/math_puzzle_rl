@@ -1,0 +1,16 @@
+#!/bin/bash
+ninja
+w_flag=0
+while getopts "w" flag; do
+	case $flag in
+		w) 
+			w_flag=1 
+			;;
+	esac
+done
+if [ "$w_flag" == 1 ]; then
+	./main -w >o
+else
+	./main>o
+fi
+nvim o
