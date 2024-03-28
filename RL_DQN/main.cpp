@@ -8,15 +8,20 @@
 float out_of_bounds;
 float in_bound;
 float completion_reward;
+std::ofstream dout("debug.txt");
 int main(int argc, char **argv){
 	/*
 	 *flags for weights
 	 */
-	int c, flag=0;
-	while((c=getopt(argc,argv,"w")) != -1){
+	int c, flag=0, train_model=0;
+	while((c=getopt(argc,argv,"wt")) != -1){
 		switch(c){
 		case 'w':
 			flag=1;
+			break;
+		
+		case 't':
+			train_model=1;
 			break;
 		}
 	}
@@ -24,17 +29,16 @@ int main(int argc, char **argv){
 	 *defining params
 	 */
 	float epsilon=1.0;
-	float initial_learning_rate=0.09;
-	float min_factor=0.0001;
-	float exp_factor=0.96;
-	int batch_size=4;
-	int replay_size=20;
+	float initial_learning_rate=0.009;
+	float exp_factor=0.98;
+	int batch_size=30;
+	int replay_size=1000000;
 	float gamma=0.9;
-	int update_count=7;
-	int steps_per_episode=10000;
+	int update_count=100;
+	int steps_per_episode=100000;
 	out_of_bounds=-0.5;
 	//in_bound=-out_of_bounds/4.0;
-	completion_reward=1.0;	
+	completion_reward=5.0;	
 	int epoch=0;
 	state curr_state;
 
@@ -42,13 +46,12 @@ int main(int argc, char **argv){
 	 *instantiating the actor
 	 */
 	vector<vector<float>> weights, bias;
-	vector<float> sub_weights, sub_bias;
+	vector<float> sub_weights, sub_bias; //weights/bias of the 2 layers
 	actor a;
 	if(flag){
 		int curr_index=0;
 		ifstream weights_in("weights.txt");
-		string s;
-		while(weights_in>>s){
+		string s; while(weights_in>>s){
 			if(s=="second"){
 				weights.push_back(sub_weights);
 				bias.push_back(sub_bias);
@@ -76,43 +79,49 @@ int main(int argc, char **argv){
 	}
 
 	/*
-	 *loading the training set
+	 *training
 	 */
-	ifstream fin("../train.txt");	
-	vector<string> training_set;
-	string s;
-	while(getline(fin,s)){
-		training_set.push_back(s);
-	}
-	fin.close();
-	
-	int progress_count=0;	
-	int update_after=training_set.size()/100;
-	for(int l=0;l<3;l++){
-		cout << "round "<<l<<'\n';
-		a.learning_rate=initial_learning_rate;
-		out_of_bounds=-0.5;
-		completion_reward=1.0;
+	if(train_model){
+		ifstream fin("../train.txt");	
+		vector<string> training_set;
+		string s;
+		while(getline(fin,s)){
+			training_set.push_back(s);
+		}
+		fin.close();
+		
+		//a.print_weights();
+		int progress_count=0;	
+		int total_epochs=training_set.size();
+		int count=0;
+		//for(int l=0;l<3;l++){
+			//dout << "round "<<l<<'\n';
+			//a.learning_rate=initial_learning_rate;
+			//out_of_bounds=-0.5;
+			//completion_reward=2.0;
 		for(auto data: training_set){
-			//if(progress_count%update_after==0)cout << '\r'<<progress_count/update_after<<"%"<<flush;
+			int percentage=progress_count*100/training_set.size();
+			std::cout<<percentage<<"%\r";
+			std::cout.flush();
+			progress_count++;
+
 			curr_state.compressed_state=data;
 			curr_state.blank_position=curr_state.find_number(0);
 				
-			int count=0;
 			int t=0; //time
 			int verbose=0;
 
-			out_of_bounds-=0.01;	
+			//out_of_bounds-=0.01;	
 			//if(in_bound>0.001/4)in_bound-=0.001/4;
 			//else in_bound=0;
-			completion_reward+=0.2;
+			//completion_reward+=0.2;
 
-			cout << "out_of_bounds: "<<out_of_bounds<<'\n';
-			cout << "in_bound: "<<in_bound<<'\n';
-			cout << "completion_reward: "<<completion_reward<<'\n';
-			
-			a.epsilon=pow(1.0/(float)(1+epoch/20),0.5);	
-			a.learning_rate=exp_factor*a.learning_rate;
+			//dout << "out_of_bounds: "<<out_of_bounds<<'\n';
+			//dout << "in_bound: "<<in_bound<<'\n';
+			//dout << "completion_reward: "<<completion_reward<<'\n';
+
+			if(a.learning_rate<1e-7)a.learning_rate=1e-7;
+			else a.learning_rate=exp_factor*a.learning_rate;
 			//if(a.learning_rate<initial_learning_rate*min_factor)
 				//exp_factor=1/exp_factor;
 			
@@ -120,61 +129,71 @@ int main(int argc, char **argv){
 				//exp_factor=1/exp_factor;
 				//out_of_bounds=-1;
 
-			cout << "epsilon: "<< a.epsilon<<'\n';
-			cout << "learning rate: "<<a.learning_rate<<'\n';
-			cout << "start state:\n";
+			dout << "epsilon: "<< a.epsilon<<'\n';
+			dout << "learning rate: "<<a.learning_rate<<'\n';
+			dout << "start state:\n";
 			print_state(curr_state);
-			//if(a.learning_rate<0.005)a.learning_rate=0.005;
-			a.print_weights();
 
-			for(;t<batch_size;t++){
-				//print_state(curr_state);
+			//for(;t<batch_size;t++){
+				////print_state(curr_state);
+				//if(isFinal(curr_state)){
+					//dout << "FINAL\n";
+					//break;
+				//}
+				//a.act(curr_state, 0);
+				
+			//}
+			//std::cout << "check1\n"<<std::flush;
+			for(;t<steps_per_episode;t++){
+				if(a.epsilon>0.1)a.epsilon-=1e-5*(a.epsilon*a.epsilon);//pow(1/(1 + (epoch*steps_per_episode+(float)t)/10000.0),0.5);
 				if(isFinal(curr_state)){
-					cout << "FINAL\n";
+					dout << "FINAL\n";
 					break;
 				}
-				curr_state=a.act(curr_state, 0);
-			}
-
-			for(;t<steps_per_episode+batch_size;t++){
-				count++;
-				if(isFinal(curr_state)){
-					cout << "FINAL\n";
-					break;
-					print_state(curr_state);
-				}
-				curr_state = a.act(curr_state, 0);
+				a.act(curr_state, 0);
 				a.learn(verbose);
-				if(t>steps_per_episode-1 && verbose==0)verbose=1;	
+				count++;
+				if(epoch>total_epochs-5 && t>steps_per_episode-1 && verbose==0)verbose=1;	
 				if(count==update_count){
-					//cout << "weights updated!\n";
+					//dout << "weights updated!\n";
 					count=0;
 					a.update_target();		
 					//a.print_target_weights();
 				}
+				//if(t>steps_per_episode-5||percentage==46)std::cout << t<<"\n"<<std::flush;
+
 			}
-			a.end_learn(1);
-			cout << "\n\n-------epoch "<< epoch<< " over------\n\n";
-			//cout << "size of exp: "<<a.experience_replay.size()<<'\n';
-			//for(const auto &row: a.actor_net.weights) {
-				//for (const auto cell : row) { std::cout << cell << ' ';
-				//}
-				//std::cout << "\n\n";
-			//}
+			//std::cout << "reached!\n"<<std::flush;
+			//a.end_learn(verbose);
+			dout << "\n\n-------epoch "<< epoch<< " over------\n\n";
 			epoch++;
 			//a.print_weights();
-			//if(epoch==1)break;
 		}
+		//a.end_learn(0);
+		//}
 	}
+	std::cout<<100<<"%\r";
+	std::cout.flush();
+
 	a.save_weights("weights.txt");
 
-	cout << "\n\n-----playing-----\n\n";
-	curr_state.compressed_state="BCDEFGAHJKLINOPM";
+	dout << "\n\n-----playing-----\n\n";
+	ifstream input("../input.txt");
+	string start_state="";
+	while(input>>c){
+		start_state+='A'+c;	
+	}
+	input.close();
+	curr_state.compressed_state=start_state;//"BCDEFGAHJKLINOPM";
 	curr_state.blank_position=curr_state.find_number(0);
 	a.epsilon=0.0;
-	for(int i=0;i<1000;i++){
+	for(int i=0;i<10;i++){
 		print_state(curr_state);
-		curr_state=a.act(curr_state, 1);
-		if(isFinal(curr_state))break;
+		a.act(curr_state, 1);
+		if(isFinal(curr_state)){
+			print_state(curr_state);
+			break;
+		}
 	}
+	dout.close();
 }

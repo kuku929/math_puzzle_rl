@@ -11,18 +11,18 @@ Network::Network(int input_size, int hidden_size, int output_size):input_size(in
 	//srand(chrono::high_resolution_clock::now().time_since_epoch().count());
 	for(int i=0;i<input_size*hidden_size;i++){
 		float normalized_value = rand()/(float)RAND_MAX-0.5; //between (-0.5,0.5)	
-		//cout << normalized_value*range << ' ';
+		//dout << normalized_value*range << ' ';
 		this->weights[0].push_back(normalized_value*range); //between (-range/2, range/2)
 	}
 
-	//cout << "\n\n";
+	//dout << "\n\n";
 	
 	for(int i=0;i<output_size*hidden_size;i++){
 		float normalized_value = rand()/(float)RAND_MAX-0.5; //between (-0.5,0.5)	
-		//cout << normalized_value*range << ' ';
+		//dout << normalized_value*range << ' ';
 		this->weights[1].push_back(normalized_value*range); //between (-range/2, range/2)
 	}
-	//cout << "\ninitial values end\n\n";
+	//dout << "\ninitial values end\n\n";
 	for(int i=0;i<hidden_size;i++)bias[0].push_back(0.0);
 	for(int i=0;i<output_size;i++)bias[1].push_back(0.0);
 
@@ -37,7 +37,7 @@ vector<float> Network::predict(const vector<float> &input){
 	vector<float> output(output_size, 0.0);
 	float weighted_sum;
 	if(input.size()!=input_size){
-		cout << "Mismatch of input dimensions!\n";
+		dout << "Mismatch of input dimensions!\n";
 		return output;
 	}
 	for(int i=0;i<hidden_size;i++){
@@ -45,9 +45,9 @@ vector<float> Network::predict(const vector<float> &input){
 		for(int j=0;j<input_size;j++){
 			weighted_sum += weights[0][i*input_size+j]*input[j];
 		}
-		//cout << weighted_sum;
-		//if(fabs(weighted_sum)>1000)for(auto in: input)cout << in<<' ';
-		//cout <<'\n';
+		//dout << weighted_sum;
+		//if(fabs(weighted_sum)>1000)for(auto in: input)dout << in<<' ';
+		//dout <<'\n';
 		hidden_output[i]=ReLU(weighted_sum);	
 	}
 	for(int i=0;i<output_size;i++){
@@ -59,21 +59,23 @@ vector<float> Network::predict(const vector<float> &input){
 	}
 
 	return output;
-
-		
 }
 
 void Network::fit(const vector<float> &input, const float true_output, const float learning_rate, const int action, int verbose){
-	//sanity check
+	/*
+	 *sanity check
+	 */
 	if(input.size()!=input_size){
-		cout << "Mismatch of input dimensions!\n";
+		dout << "Mismatch of input dimensions!\n";
 		return;
 	}
 	vector<float> hidden_output(hidden_size, 0);
 	vector<float> output(output_size, 0);
 	float weighted_sum; 
 
-	//predicting first
+	/*
+	 *predicting first
+	 */
 	for(int i=0;i<hidden_size;i++){
 		weighted_sum = bias[0][i]; //sk
 		for(int j=0;j<input_size;j++)
@@ -88,26 +90,28 @@ void Network::fit(const vector<float> &input, const float true_output, const flo
 		output[i]=weighted_sum; //y0	
 	}
 	if(verbose){
-		cout << "\nprediction: ";
-		for(auto t: output)cout << t<<' ';
-		cout << "\n";
+		dout << "\nprediction: ";
+		for(auto t: output)dout << t<<' ';
+		dout << "\n";
 	}
 
-	//backpropagation
+	/*
+	 *backpropagation
+	 */
 	vector<float> delta_weights;
 	float delta_weight, delta, hidden_delta, delta_theta;
 	
 	delta=(true_output-output[action])*Fdash(output[action], "Linear"); 
 	if(verbose){
-		cout << "predicted value: "<<output[action]<<' ';
-		cout << "Error: "<<delta<<'\n';
+		dout << "predicted value: "<<output[action]<<' ';
+		dout << "Error: "<<delta<<'\n';
 	}
 	delta_theta=delta*learning_rate; //delta bias of output layer
 	this->bias[1][action]+=delta_theta; //updating the bias
 	//if(verbose){
-		//cout << "bias: ";
-		//for(auto b: this->bias[1])cout << b<<' ';
-		//cout << '\n';
+		//dout << "bias: ";
+		//for(auto b: this->bias[1])dout << b<<' ';
+		//dout << '\n';
 	//}
 	for(int j=0;j<hidden_size;j++){
 		delta_weight = delta_theta*hidden_output[j]; 
@@ -160,7 +164,7 @@ float Fdash(float output, string activation_function){
 		else return 1.0;
 	}
 	
-	cout << "unidentified activation function!\n";
+	dout << "unidentified activation function!\n";
 	return 0.0;
 }
 

@@ -10,7 +10,7 @@
 #include <algorithm>
 using namespace std;
 #define MAX_PRIME 524160 
-extern unordered_map<string, int> index_map;
+extern ofstream dout;
 
 struct state{
 	int blank_position;
@@ -50,4 +50,4 @@ int find_the_move(state &first_state, state &next_state, int current_row);
 void move_puzzle(int blank_position, int move_no, int arr[16]);
 void beautiful_print(int arr[16]);
 vector<int> possible_moves(const state &curr_state);
-state move(const state &curr_state, int action);
+void move(state &curr_state, int action);

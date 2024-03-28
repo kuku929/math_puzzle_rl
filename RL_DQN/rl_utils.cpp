@@ -10,7 +10,7 @@
 #include <unistd.h>
 using namespace std;
 #define MAX_PRIME 524160 
-
+extern ofstream dout;
 bool isFinal(const state& given_state){
 	for(int i=0;i<15;i++){
 		if(given_state.compressed_state[i]!=i+1+'A')return false;
@@ -21,10 +21,10 @@ bool isFinal(const state& given_state){
 
 void print_state(const state& given_state){
 	for(int i=0;i<4;i++){
-		for(int j=0;j<4;j++)cout << (given_state.compressed_state[4*i+j]-'A')<<' ';
-		cout << '\n';
+		for(int j=0;j<4;j++)dout << (given_state.compressed_state[4*i+j]-'A')<<' ';
+		dout << '\n';
 	}
-	cout << "*******************\n";
+	dout << "*******************\n";
 	return;
 }
 
@@ -102,8 +102,8 @@ vector<int> possible_moves(const state &curr_state){
 }
 
 
-state move(const state &old_state, int action){
-	state curr_state(old_state); 
+void move(state &curr_state, int action){
+	//state curr_state(old_state); 
 	int curr_blank_position=curr_state.blank_position;
 	int next_blank_position;
 	int possible=0;
@@ -129,7 +129,6 @@ state move(const state &old_state, int action){
 		curr_state.compressed_state[curr_blank_position]=curr_state.compressed_state[next_blank_position];
 		curr_state.compressed_state[next_blank_position]='A';
 		curr_state.blank_position=next_blank_position;
-		return curr_state;
 	}
-	return curr_state;
+	return;
 }

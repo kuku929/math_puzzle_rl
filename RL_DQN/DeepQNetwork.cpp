@@ -10,25 +10,26 @@
 using namespace std;
 
 
-state actor::act(const state &some_state, int verbose){
+void actor::act(state &some_state, int verbose){
 	//vector<int> action_space=possible_moves(some_state); //possible actions	
 	//if(isFinal(some_state)){
-		//cout << "\n\nREACHED!\n\n";
+		//dout << "\n\nREACHED!\n\n";
 		//return some_state;
 	//}
 	vector<float> input=normalize(some_state); //normalizing input between 0 to 1
 	vector<float> q_values=this->actor_net.predict(input); //finding Q(s,a)
 	if(verbose){
-		cout << "q_values: ";
-		for(auto t: q_values)cout << t<<' ';
-		cout << "\n\n";
+		dout << "q_values: ";
+		for(auto t: q_values)dout << t<<' ';
+		dout << "\n\n";
 	}
 	
-	int action = EpsilonGreedy(q_values, this->epsilon, verbose); //choosing an action
+	int action = EpsilonGreedy(q_values, this->epsilon, 0); //choosing an action
 	this->experience_replay.push_back(state_action(some_state, action)); //saving to experience log
 	if(this->experience_replay.size()>this->replay_size)this->experience_replay.erase(this->experience_replay.begin()); //maintaining the size 
 	
-	return move(some_state, action);
+	move(some_state, action);
+	return;
 }
 
 void actor::learn(int verbose){
@@ -49,19 +50,22 @@ void actor::learn(int verbose){
 		 */
 		if(find(action_space.begin(), action_space.end(), random_state.second)==action_space.end()){
 			reward=out_of_bounds;
-			if(verbose)cout << "action "<<random_state.second<<" not allowed!\n";
+			if(verbose)dout << "action "<<random_state.second<<" not allowed!\n";
 		}
 
 		else{
 			//if(action_space.size()<4)reward+=in_bound;
-			next_state=move(random_state.first, random_state.second);
-			reward+=R(random_state);
+			move(next_state, random_state.second);
+			reward+=R(random_state.first, next_state);
 		}
 
 		/*
 		 *finding target value based on the reward recieved
 		 */
-		if(reward==completion_reward)target_value=reward; //if final state stop 
+		if(reward==completion_reward){
+			target_value=reward; //if final state stop 
+			dout << "learning final state\n";
+		}
 		else{                                            //find next state q values
 			input=normalize(next_state);
 			target_q_values =this->target_net.predict(input); 
@@ -70,10 +74,10 @@ void actor::learn(int verbose){
 		/*
 		 *debugging
 		 */
-		if(verbose){ cout << "target values for action "<<random_state.second<<": "; for(auto t: target_q_values)cout << t<<' ';
-			cout << '\n';
-			cout << "reward received: "<< reward<<'\n';
-			cout << "target: "<<target_value<<'\n';
+		if(verbose){ dout << "target values for action "<<random_state.second<<": "; for(auto t: target_q_values)dout << t<<' ';
+			dout << '\n';
+			dout << "reward received: "<< reward<<'\n';
+			dout << "target: "<<target_value<<'\n';
 		}
 
 		/*
@@ -82,14 +86,14 @@ void actor::learn(int verbose){
 		input=normalize(random_state.first); //normalizing input
 		this->actor_net.fit(input, target_value, this->learning_rate, random_state.second, verbose); //learning using back propagation 
 	}
-	if(verbose)cout<< "------learned--------\n\n";
+	if(verbose)dout<< "------learned--------\n\n";
 }
 
 void actor::end_learn(int verbose){
-	if(verbose)cout << "learning the last states\n";
+	if(verbose)dout << "learning the last states\n";
 	int initial_size = this->experience_replay.size(); 
 	if(initial_size==0){
-		cout << "no memory!\n";
+		dout << "no memory!\n";
 		return;
 	}
 	for(int i=0;i<initial_size;i++){
@@ -110,27 +114,27 @@ void actor::update_target(){
 }
 
 void actor::print_weights(){
-	cout << "first layer:\n";
+	dout << "first layer:\n";
 	int count=0;
 	for(const auto t: this->actor_net.weights[0]){
-		if(count%(input_size)<input_size-1)cout << t<<' ';
+		if(count%(input_size)<input_size-1)dout << t<<' ';
 		if(count%input_size==input_size-1){
-			cout<< t<<' ';
-			cout << "bias: " << this->actor_net.bias[0][count/input_size]<<'\n'; 
+			dout<< t<<' ';
+			dout << "bias: " << this->actor_net.bias[0][count/input_size]<<'\n'; 
 		}
 		count++;
 	}
-	cout << "\nsecond layer:\n";
+	dout << "\nsecond layer:\n";
 	count=0;
 	for(const auto t: this->actor_net.weights[1]){
-		if(count%hidden_size<hidden_size-1)cout << t<<' ';
+		if(count%hidden_size<hidden_size-1)dout << t<<' ';
 		if(count%hidden_size==hidden_size-1){
-			cout<< t<<' ';
-			cout << "bias: "<<this->actor_net.bias[1][count/hidden_size]<<'\n'; 
+			dout<< t<<' ';
+			dout << "bias: "<<this->actor_net.bias[1][count/hidden_size]<<'\n'; 
 		}
 		count++;
 	}
-	cout << "\n\n-------weights-end-------\n\n";
+	dout << "\n\n-------weights-end-------\n\n";
 }
 
 void actor::save_weights(string weights_filename){
@@ -157,27 +161,27 @@ void actor::save_weights(string weights_filename){
 	fout.close();
 }
 void actor::print_target_weights(){
-	cout << "first layer:\n";
+	dout << "first layer:\n";
 	int count=0;
 	for(const auto t: this->target_net.weights[0]){
-		if(count%(input_size)<input_size-1)cout << t<<' ';
+		if(count%(input_size)<input_size-1)dout << t<<' ';
 		if(count%input_size==input_size-1){
-			cout << "bias: " << this->target_net.bias[0][count/input_size]; 
-			cout<< t<<'\n';
+			dout << "bias: " << this->target_net.bias[0][count/input_size]; 
+			dout<< t<<'\n';
 		}
 		count++;
 	}
-	cout << "\nsecond layer:\n";
+	dout << "\nsecond layer:\n";
 	count=0;
 	for(const auto t: this->target_net.weights[1]){
-		if(count%hidden_size<hidden_size-1)cout << t<<' ';
+		if(count%hidden_size<hidden_size-1)dout << t<<' ';
 		if(count%hidden_size==hidden_size-1){
-			cout << "bias: "<<this->target_net.bias[1][count/hidden_size]; 
-			cout<< t<<'\n';
+			dout << "bias: "<<this->target_net.bias[1][count/hidden_size]; 
+			dout<< t<<'\n';
 		}
 		count++;
 	}
-	cout << "\n\n-------weights-end-------\n\n";
+	dout << "\n\n-------weights-end-------\n\n";
 }
 
 
@@ -185,7 +189,7 @@ int EpsilonGreedy(const vector<float> &q_values, float epsilon, int verbose){ //
 	//srand(2); //initializing seed	
 	if(rand()/(float)RAND_MAX <= epsilon) //random action
 		return rand()%4;
-	if(verbose)cout << "\nmaking greedy action!\n";
+	if(verbose)dout << "\nmaking greedy action!\n";
 	
 	return max_element(q_values.begin(), q_values.end())-q_values.begin();
 	//vector<float> allowed_q_values(action_space.size());
@@ -205,8 +209,8 @@ vector<float> normalize(const state &some_state){
 	return normalized_output;
 }
 
-float actor::R(const state_action &state_pair){
-	if(isFinal(move(state_pair.first, state_pair.second)))return completion_reward;
+float actor::R(state &curr_state, state &next_state){
+	if(isFinal(next_state))return completion_reward;
 	//if(replay_index>0){
 		//int prev_move=this->experience_replay[replay_index-1].second;
 		//if(abs(prev_move-state_pair.second)!=2)return 0.1; //avoid repitition of same moves

@@ -1,10 +1,11 @@
 #pragma once
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <string>
 #include <cmath> //pow
 using namespace std;
-
+extern ofstream dout;
 
 struct Network{
 	vector<vector<float>> weights{vector<vector<float>>(2)};
