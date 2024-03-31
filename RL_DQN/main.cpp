@@ -25,22 +25,23 @@ int main(int argc, char **argv){
 			break;
 		}
 	}
+
 	/*
 	 *defining params
 	 */
 	float epsilon=1.0;
-	float initial_learning_rate=0.009;
-	float exp_factor=0.98;
+	float initial_learning_rate=0.0009;
 	int batch_size=30;
 	int replay_size=1000000;
 	float gamma=0.9;
-	int update_count=100;
+	int update_count=50;
 	int steps_per_episode=100000;
 	out_of_bounds=-0.5;
-	//in_bound=-out_of_bounds/4.0;
-	completion_reward=5.0;	
+	completion_reward=2.0;	
 	int epoch=0;
 	state curr_state;
+	//float exp_factor=0.98;
+	//in_bound=-out_of_bounds/4.0;
 
 	/*
 	 *instantiating the actor
@@ -82,7 +83,7 @@ int main(int argc, char **argv){
 	 *training
 	 */
 	if(train_model){
-		ifstream fin("../train.txt");	
+		ifstream fin("../data/train.txt");	
 		vector<string> training_set;
 		string s;
 		while(getline(fin,s)){
@@ -94,11 +95,7 @@ int main(int argc, char **argv){
 		int progress_count=0;	
 		int total_epochs=training_set.size();
 		int count=0;
-		//for(int l=0;l<3;l++){
-			//dout << "round "<<l<<'\n';
-			//a.learning_rate=initial_learning_rate;
-			//out_of_bounds=-0.5;
-			//completion_reward=2.0;
+
 		for(auto data: training_set){
 			int percentage=progress_count*100/training_set.size();
 			std::cout<<percentage<<"%\r";
@@ -120,8 +117,8 @@ int main(int argc, char **argv){
 			//dout << "in_bound: "<<in_bound<<'\n';
 			//dout << "completion_reward: "<<completion_reward<<'\n';
 
-			if(a.learning_rate<1e-7)a.learning_rate=1e-7;
-			else a.learning_rate=exp_factor*a.learning_rate;
+			//if(a.learning_rate<1e-7)a.learning_rate=1e-7;
+			//else a.learning_rate=exp_factor*a.learning_rate;
 			//if(a.learning_rate<initial_learning_rate*min_factor)
 				//exp_factor=1/exp_factor;
 			
@@ -145,15 +142,16 @@ int main(int argc, char **argv){
 			//}
 			//std::cout << "check1\n"<<std::flush;
 			for(;t<steps_per_episode;t++){
-				if(a.epsilon>0.1)a.epsilon-=1e-5*(a.epsilon*a.epsilon);//pow(1/(1 + (epoch*steps_per_episode+(float)t)/10000.0),0.5);
+				if(a.epsilon>0.1)a.epsilon-=2*1e-5*(a.epsilon*a.epsilon);//pow(1/(1 + (epoch*steps_per_episode+(float)t)/10000.0),0.5);
 				if(isFinal(curr_state)){
 					dout << "FINAL\n";
 					break;
 				}
 				a.act(curr_state, 0);
-				a.learn(verbose);
+				if(t%5==0)a.learn(verbose);
+				
 				count++;
-				if(epoch>total_epochs-5 && t>steps_per_episode-1 && verbose==0)verbose=1;	
+				//if(t>steps_per_episode-5 && verbose==0)verbose=1;	
 				if(count==update_count){
 					//dout << "weights updated!\n";
 					count=0;
@@ -167,18 +165,16 @@ int main(int argc, char **argv){
 			//a.end_learn(verbose);
 			dout << "\n\n-------epoch "<< epoch<< " over------\n\n";
 			epoch++;
-			//a.print_weights();
+			a.print_weights();
+			a.save_weights("weights.txt");
+
 		}
 		//a.end_learn(0);
 		//}
 	}
-	std::cout<<100<<"%\r";
-	std::cout.flush();
-
-	a.save_weights("weights.txt");
 
 	dout << "\n\n-----playing-----\n\n";
-	ifstream input("../input.txt");
+	ifstream input("../data/input.txt");
 	string start_state="";
 	while(input>>c){
 		start_state+='A'+c;	
