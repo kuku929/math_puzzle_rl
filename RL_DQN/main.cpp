@@ -5,11 +5,15 @@
 #include <fstream>
 #include <cmath>
 #include <unistd.h>
+#include <chrono>
 float out_of_bounds;
 float in_bound;
 float completion_reward;
+using Clock = std::chrono::steady_clock;
+using Second = std::chrono::duration<double, std::ratio<1> >;
 std::ofstream dout("debug.txt");
 int main(int argc, char **argv){
+	std::chrono::time_point<Clock> m_beg = Clock::now();
 	/*
 	 *flags for weights
 	 */
@@ -40,8 +44,6 @@ int main(int argc, char **argv){
 	completion_reward=2.0;	
 	int epoch=0;
 	state curr_state;
-	//float exp_factor=0.98;
-	//in_bound=-out_of_bounds/4.0;
 
 	/*
 	 *instantiating the actor
@@ -79,6 +81,8 @@ int main(int argc, char **argv){
 		a=a_copy;
 	}
 
+
+	curr_state.compressed_state="BCDEFGAHJKLINOPM";
 	/*
 	 *training
 	 */
@@ -126,10 +130,10 @@ int main(int argc, char **argv){
 				//exp_factor=1/exp_factor;
 				//out_of_bounds=-1;
 
-			dout << "epsilon: "<< a.epsilon<<'\n';
-			dout << "learning rate: "<<a.learning_rate<<'\n';
-			dout << "start state:\n";
-			print_state(curr_state);
+			//dout << "epsilon: "<< a.epsilon<<'\n';
+			//dout << "learning rate: "<<a.learning_rate<<'\n';
+			//dout << "start state:\n";
+			//print_state(curr_state);
 
 			//for(;t<batch_size;t++){
 				////print_state(curr_state);
@@ -148,7 +152,7 @@ int main(int argc, char **argv){
 					break;
 				}
 				a.act(curr_state, 0);
-				if(t%5==0)a.learn(verbose);
+				//if(t%5==0)a.learn(verbose);
 				
 				count++;
 				//if(t>steps_per_episode-5 && verbose==0)verbose=1;	
@@ -165,31 +169,31 @@ int main(int argc, char **argv){
 			//a.end_learn(verbose);
 			dout << "\n\n-------epoch "<< epoch<< " over------\n\n";
 			epoch++;
-			a.print_weights();
+			//a.print_weights();
 			a.save_weights("weights.txt");
 
 		}
 		//a.end_learn(0);
 		//}
 	}
-
-	dout << "\n\n-----playing-----\n\n";
-	ifstream input("../data/input.txt");
-	string start_state="";
-	while(input>>c){
-		start_state+='A'+c;	
-	}
-	input.close();
-	curr_state.compressed_state=start_state;//"BCDEFGAHJKLINOPM";
-	curr_state.blank_position=curr_state.find_number(0);
-	a.epsilon=0.0;
-	for(int i=0;i<10;i++){
-		print_state(curr_state);
-		a.act(curr_state, 1);
-		if(isFinal(curr_state)){
-			print_state(curr_state);
-			break;
-		}
-	}
-	dout.close();
+	std::cout << "\ntime taken: "<<std::chrono::duration_cast<Second>(Clock::now() - m_beg).count()<<'\n'; 
+	//dout << "\n\n-----playing-----\n\n";
+	//ifstream input("../data/input.txt");
+	//string start_state="";
+	//while(input>>c){
+		//start_state+='A'+c;	
+	//}
+	//input.close();
+	//curr_state.compressed_state=start_state;//"BCDEFGAHJKLINOPM";
+	//curr_state.blank_position=curr_state.find_number(0);
+	//a.epsilon=0.0;
+	//for(int i=0;i<10;i++){
+		//print_state(curr_state);
+		//a.act(curr_state, 1);
+		//if(isFinal(curr_state)){
+			//print_state(curr_state);
+			//break;
+		//}
+	//}
+	//dout.close();
 }

@@ -2,14 +2,14 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <chrono>
 using namespace std;
 vector<int> possible_moves(int curr_blank_position){
 	vector<int> action_space;
 	for(int i=0;i<4;i++){
 		int possible=1;
 		switch(i){
-			case 0:
-				if(curr_blank_position/4==0)possible=0;
+			case 0: if(curr_blank_position/4==0)possible=0;
 				break;
 			case 1:
 				if(curr_blank_position%4==3)possible=0;
@@ -62,8 +62,9 @@ void beautiful_print(int arr[16]){
 }
 
 int main(int argc, char **argv){
-	if(argc<3){
-		cout << "enter the size and the total moves.\n";
+	srand(chrono::high_resolution_clock::now().time_since_epoch().count());
+	if(argc<4){
+		cout << "enter the size, starting moves and the total moves.\n";
 		return 0;
 	}
 	int a[16];
@@ -72,8 +73,8 @@ int main(int argc, char **argv){
 	int blank_position = 15;
 	vector<int> action_space;	
 	int size=atoi(argv[1]);
-	int total_moves=atoi(argv[2]);
-	int no_of_moves=1;
+	int total_moves=atoi(argv[3]);
+	int no_of_moves=atoi(argv[2]);
 	int max_repititions=5;
 	ofstream fout("train.txt");
 	int prev_action=0;
@@ -91,7 +92,7 @@ int main(int argc, char **argv){
 			move(a, action_space[action], blank_position);
 			prev_action=action_space[action];
 		}
-		no_of_moves=1+(j*total_moves)/size;
+		no_of_moves+=(j*total_moves)/size;
 		//for(int k=0;k<max_repititions;k++){
 		for(int i=0;i<16;i++)fout<<(char)(a[i]+'A');
 		fout<<'\n';
