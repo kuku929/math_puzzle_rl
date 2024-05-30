@@ -1,5 +1,5 @@
-.ninja*
-.a
-.cmake
+*.ninja*
+*.a
+*.cmake
 CMakeCache.txt
-CMakeFiles
+CMakeFiles/
