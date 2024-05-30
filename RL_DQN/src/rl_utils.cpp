@@ -9,19 +9,26 @@
 #include <cmath>
 #include <unistd.h>
 using namespace std;
-#define MAX_PRIME 524160 
 extern ofstream dout;
+int SIZE=3;
 bool isFinal(const state& given_state){
-	for(int i=0;i<15;i++){
-		if(given_state.compressed_state[i]!=i+1+'A')return false;
+	/*
+	 *checks if the puzzle has reached final state
+	 */
+	for(int i=0;i<SIZE*SIZE-1;i++){
+		if(given_state.compressed_state[i]!=static_cast<char>(i+1+static_cast<int>('A')))
+				return false;
 	}
 
 	return true;
 }
 
 void print_state(const state& given_state){
-	for(int i=0;i<4;i++){
-		for(int j=0;j<4;j++)dout << (given_state.compressed_state[4*i+j]-'A')<<' ';
+	/*
+	 *prints the state in a matrix form
+	 */
+	for(int i=0;i<SIZE;i++){
+		for(int j=0;j<SIZE;j++)dout << static_cast<int>(given_state.compressed_state[SIZE*i+j]-'A')<<' ';
 		dout << '\n';
 	}
 	dout << "*******************\n";
@@ -29,16 +36,19 @@ void print_state(const state& given_state){
 }
 
 void print_all_states(unordered_map<string,vector<state>>& possible_states){
+	/*
+	 *prints all the states in an array
+	 */
 	for(auto t=possible_states.begin();t!=possible_states.end();t++){
 		cout << "current state\n";
-		for(int i=0;i<4;i++){
-			for(int j=0;j<4;j++)cout << (t->first[4*i+j]-'A')<<' ';
+		for(int i=0;i<SIZE;i++){
+			for(int j=0;j<SIZE;j++)cout << static_cast<int>(t->first[SIZE*i+j]-'A')<<' ';
 			cout << '\n';
 		}
 		cout<<"******************\n";
 		for(auto u: t->second){
-			for(int i=0;i<4;i++){
-				for(int j=0;j<4;j++)cout <<u.compressed_state[4*i+j]-'A' <<' ';
+			for(int i=0;i<SIZE;i++){
+				for(int j=0;j<SIZE;j++)cout <<static_cast<int>(u.compressed_state[SIZE*i+j]-'A') <<' ';
 				cout<<'\n';
 			}
 			cout<<"********************\n";
@@ -46,28 +56,15 @@ void print_all_states(unordered_map<string,vector<state>>& possible_states){
 	}
 }
 
-int find_the_move(state &first_state, state &next_state, int current_row){
-	int blank_value = (current_row==2) ? 1:15;
-	int first_blank_position = first_state.find_number(blank_value); 
-	int next_blank_position = next_state.find_number(blank_value);
-
-	return (next_blank_position-first_blank_position);
-}
-void move_puzzle(int blank_position, int move_no, int arr[16]){
-	int blank_value = arr[blank_position];
-	int next_blank_position = blank_position+move_no;
-
-	arr[blank_position] = arr[next_blank_position];
-	arr[next_blank_position] = blank_value;
-	
-	return;
-}
-void beautiful_print(int arr[16]){
+void beautiful_print(int arr[]){
+	/*
+	 *sexy print
+	 */
 	cout << "_____________\n"<<flush;
-	for(int i=0;i<4;i++){
-		for(int j=0;j<4;j++){
-			if(arr[4*i+j]<10)cout <<"| "<< arr[4*i+j]<<flush;
-			else cout<< "|"<<arr[4*i+j]<<flush;
+	for(int i=0;i<SIZE;i++){
+		for(int j=0;j<SIZE;j++){
+			if(arr[SIZE*i+j]<10)cout <<"| "<< arr[SIZE*i+j]<<flush;
+			else cout<< "|"<<arr[SIZE*i+j]<<flush;
 		}
 		cout << "|\n____________\n"<<flush;
 	}
@@ -77,22 +74,26 @@ void beautiful_print(int arr[16]){
 }
 
 vector<int> possible_moves(const state &curr_state){
+	/*
+	 *finds all the possible moves in the current state
+	 *returns an array of all the possible moves
+	 */
 	int curr_blank_position=curr_state.blank_position;
-	vector<int> action_space;
+	vector<int> action_space; 
 	for(int i=0;i<4;i++){
 		int possible=1;
 		switch(i){
 			case 0:
-				if(curr_blank_position/4==0)possible=0;
+				if(curr_blank_position/SIZE==0)possible=0;
 				break;
 			case 1:
-				if(curr_blank_position%4==3)possible=0;
+				if(curr_blank_position%SIZE==SIZE-1)possible=0;
 				break;
 			case 2:
-				if(curr_blank_position/4==3)possible=0;
+				if(curr_blank_position/SIZE==SIZE-1)possible=0;
 				break;
 			case 3:
-				if(curr_blank_position%4==0)possible=0;
+				if(curr_blank_position%SIZE==0)possible=0;
 				break;
 		}
 		if(possible)
@@ -103,25 +104,28 @@ vector<int> possible_moves(const state &curr_state){
 
 
 void move(state &curr_state, int action){
-	//state curr_state(old_state); 
+	/*
+	 *moves the blank in the direction of the action
+	 *changes the curr_state struct
+	 */
 	int curr_blank_position=curr_state.blank_position;
 	int next_blank_position;
 	int possible=0;
 	switch(action){
 		case 0:
-			if(curr_blank_position>3)possible=1;
-			next_blank_position=curr_blank_position-4;
+			if(curr_blank_position>SIZE-1)possible=1;
+			next_blank_position=curr_blank_position-SIZE;
 			break;
 		case 1:
-			if(curr_blank_position%4<3)possible=1;
+			if(curr_blank_position%SIZE<SIZE-1)possible=1;
 			next_blank_position=curr_blank_position+1;
 			break;
 		case 2:
-			if(curr_blank_position<12)possible=1;
-			next_blank_position=curr_blank_position+4;
+			if(curr_blank_position<SIZE*(SIZE-1))possible=1;
+			next_blank_position=curr_blank_position+SIZE;
 			break;
 		case 3:
-			if(curr_blank_position%4>0)possible=1;
+			if(curr_blank_position%SIZE>0)possible=1;
 			next_blank_position=curr_blank_position-1;
 			break;
 	}

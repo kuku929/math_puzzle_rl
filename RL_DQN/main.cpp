@@ -1,17 +1,21 @@
 #include "DeepQNetwork.h"
 #include "rl_utils.h"
 #include "NeuralNetwork.h"
+#include "globals.h"
 #include <iostream>
 #include <fstream>
 #include <cmath>
 #include <unistd.h>
 #include <chrono>
+#include <cstdio>
 float out_of_bounds;
 float in_bound;
 float completion_reward;
+using namespace std;
 using Clock = std::chrono::steady_clock;
 using Second = std::chrono::duration<double, std::ratio<1> >;
 std::ofstream dout("debug.txt");
+//std::ofstream plt("plot.txt");
 int main(int argc, char **argv){
 	std::chrono::time_point<Clock> m_beg = Clock::now();
 	/*
@@ -27,23 +31,9 @@ int main(int argc, char **argv){
 		case 't':
 			train_model=1;
 			break;
-		}
+		} 
 	}
 
-	/*
-	 *defining params
-	 */
-	float epsilon=1.0;
-	float initial_learning_rate=0.0009;
-	int batch_size=30;
-	int replay_size=1000000;
-	float gamma=0.9;
-	int update_count=50;
-	int steps_per_episode=100000;
-	out_of_bounds=-0.5;
-	completion_reward=2.0;	
-	int epoch=0;
-	state curr_state;
 
 	/*
 	 *instantiating the actor
@@ -52,7 +42,6 @@ int main(int argc, char **argv){
 	vector<float> sub_weights, sub_bias; //weights/bias of the 2 layers
 	actor a;
 	if(flag){
-		int curr_index=0;
 		ifstream weights_in("weights.txt");
 		string s; while(weights_in>>s){
 			if(s=="second"){
@@ -72,20 +61,15 @@ int main(int argc, char **argv){
 	weights.push_back(sub_weights);
 	bias.push_back(sub_bias);
 	weights_in.close();
-	actor a_copy(epsilon, initial_learning_rate, batch_size, replay_size, gamma, weights, bias);
+	actor a_copy(weights, bias);
 	a=a_copy; //kinda dumb but whatever
 	}
 
-	else{ 
-		actor a_copy(epsilon, initial_learning_rate, batch_size, replay_size, gamma);
-		a=a_copy;
-	}
-
-
-	curr_state.compressed_state="BCDEFGAHJKLINOPM";
+	state curr_state;
 	/*
 	 *training
 	 */
+	int total_loop_time = 0;
 	if(train_model){
 		ifstream fin("../data/train.txt");	
 		vector<string> training_set;
@@ -96,12 +80,15 @@ int main(int argc, char **argv){
 		fin.close();
 		
 		//a.print_weights();
-		int progress_count=0;	
-		int total_epochs=training_set.size();
+		size_t progress_count=0;	
 		int count=0;
-
+		
+		float EPSILON_DECAY_FACTOR = 1.0f/static_cast<float>(training_set.size());
+		//cout <<"decay factor: "<< EPSILON_DECAY_FACTOR<<'\n';
 		for(auto data: training_set){
-			int percentage=progress_count*100/training_set.size();
+			dout << "-------epoch "<< EPOCH<< " starting------\n";
+			//printing progress
+			size_t percentage=progress_count*100/training_set.size();
 			std::cout<<percentage<<"%\r";
 			std::cout.flush();
 			progress_count++;
@@ -112,88 +99,54 @@ int main(int argc, char **argv){
 			int t=0; //time
 			int verbose=0;
 
-			//out_of_bounds-=0.01;	
-			//if(in_bound>0.001/4)in_bound-=0.001/4;
-			//else in_bound=0;
-			//completion_reward+=0.2;
+			dout << "EPSILON : "<< EPSILON<<'\n';
+			dout << "START STATE\n";
+			print_state(curr_state);
 
-			//dout << "out_of_bounds: "<<out_of_bounds<<'\n';
-			//dout << "in_bound: "<<in_bound<<'\n';
-			//dout << "completion_reward: "<<completion_reward<<'\n';
-
-			//if(a.learning_rate<1e-7)a.learning_rate=1e-7;
-			//else a.learning_rate=exp_factor*a.learning_rate;
-			//if(a.learning_rate<initial_learning_rate*min_factor)
-				//exp_factor=1/exp_factor;
-			
-			//if(a.learning_rate>=initial_learning_rate)
-				//exp_factor=1/exp_factor;
-				//out_of_bounds=-1;
-
-			//dout << "epsilon: "<< a.epsilon<<'\n';
-			//dout << "learning rate: "<<a.learning_rate<<'\n';
-			//dout << "start state:\n";
-			//print_state(curr_state);
-
-			//for(;t<batch_size;t++){
-				////print_state(curr_state);
-				//if(isFinal(curr_state)){
-					//dout << "FINAL\n";
-					//break;
-				//}
-				//a.act(curr_state, 0);
-				
-			//}
-			//std::cout << "check1\n"<<std::flush;
-			for(;t<steps_per_episode;t++){
-				if(a.epsilon>0.1)a.epsilon-=2*1e-5*(a.epsilon*a.epsilon);//pow(1/(1 + (epoch*steps_per_episode+(float)t)/10000.0),0.5);
+			for(;t<STEPS_PER_EPISODE;t++){
+				if(t>STEPS_PER_EPISODE-6 && verbose==0)verbose=1;	
 				if(isFinal(curr_state)){
-					dout << "FINAL\n";
+					dout << "final state reached, aborting\n";
 					break;
 				}
 				a.act(curr_state, 0);
-				//if(t%5==0)a.learn(verbose);
+				if(t%5==0)a.learn(verbose);
 				
 				count++;
-				//if(t>steps_per_episode-5 && verbose==0)verbose=1;	
-				if(count==update_count){
-					//dout << "weights updated!\n";
+				if(count==UPDATE_COUNT){
 					count=0;
 					a.update_target();		
-					//a.print_target_weights();
 				}
-				//if(t>steps_per_episode-5||percentage==46)std::cout << t<<"\n"<<std::flush;
 
 			}
-			//std::cout << "reached!\n"<<std::flush;
-			//a.end_learn(verbose);
-			dout << "\n\n-------epoch "<< epoch<< " over------\n\n";
-			epoch++;
-			//a.print_weights();
+			total_loop_time += t;
+			if(EPSILON>0.1)EPSILON-=EPSILON_DECAY_FACTOR;//6*1e-3f*(EPSILON*EPSILON);//pow(1/(1 + (epoch*steps_per_episode+(float)t)/10000.0),0.5);
+			dout << "-------epoch "<< EPOCH<< " over------\n\n";
+			EPOCH++;
 			a.save_weights("weights.txt");
 
 		}
-		//a.end_learn(0);
-		//}
 	}
 	std::cout << "\ntime taken: "<<std::chrono::duration_cast<Second>(Clock::now() - m_beg).count()<<'\n'; 
-	//dout << "\n\n-----playing-----\n\n";
-	//ifstream input("../data/input.txt");
-	//string start_state="";
-	//while(input>>c){
-		//start_state+='A'+c;	
-	//}
-	//input.close();
-	//curr_state.compressed_state=start_state;//"BCDEFGAHJKLINOPM";
-	//curr_state.blank_position=curr_state.find_number(0);
-	//a.epsilon=0.0;
-	//for(int i=0;i<10;i++){
-		//print_state(curr_state);
-		//a.act(curr_state, 1);
-		//if(isFinal(curr_state)){
-			//print_state(curr_state);
-			//break;
-		//}
-	//}
-	//dout.close();
+	std::cout << "no of iterations: " << total_loop_time << '\n';
+	dout << "\n\n-----playing-----\n\n";
+	ifstream input("../data/input.txt");
+	string start_state="";
+	while(input>>c){
+		start_state+=static_cast<char>(static_cast<int>('A')+c);	
+	}
+	input.close();
+	curr_state.compressed_state=start_state;//"BCDEFGAHJKLINOPM";
+	curr_state.blank_position=curr_state.find_number(0);
+	EPSILON=0.0;
+	for(int i=0;i<10;i++){
+		print_state(curr_state);
+		a.act(curr_state, 1);
+		if(isFinal(curr_state)){
+			print_state(curr_state);
+			break;
+		}
+	}
+	dout.close();
+	//plt.close();
 }
