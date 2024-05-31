@@ -1,23 +1,22 @@
-Aim: Implementing Different Reinforcement Learning algorithms for solving the 15 puzzle and its variants.
 
-If you don't know about the 15-puzzle, try it here: https://15puzzle.netlify.app/
+# $N^2-1$-puzzle solver using different Reinforcement Learning techniques 
 
-to run the code locally, follow the given instructions: 
+This project focusses on two different algorithms to find mostly optimal solutions to the 15-puzzle and in general to a $N^2-1$ puzzle.
 
-1) download the repo on your local machine. 
-2) open a terminal and create a build directory inside your project folder, cd into it.
-3) once inside, run cmake .. -G Ninja.
-4) then run ninja.
-5) you will now see an executable named rl.
-6) run the code using ./rl -p -t (float) -i (input filename)
+I have explored the following algorithms:
+- Value Iteration
+- Deep Q-Learning
 
-Allowed flags:
 
--p : one can use an existing policy by putting this flag while running, 
-     keep in mind the policy must be stored in the same directory as the executable and should be named "policy.txt"
-     
--t : specifies the threshold for training the model, default value is 100.0. Pass this flag if you want to train the model further.
+## About the puzzle
 
--i : input flag, passing it will prompt the model to play the 15 puzzle game with the initial state as described in the input.txt
-     an example input.txt has been provided. Please refer to it for the format of the input.
+If you have not played the 15-puzzle, you can try it [here][https://15puzzle.netlify.app/]
 
+
+the generalization to the 15-puzzle is an $N^2-1$ puzzle. The $N^2-1$-puzzle is a widely known puzzle. It is also an excellent benchmark to test heuristic search algorithms like A*. 
+
+The puzzle is challenging to train RL algorithms on owing to its huge state space, the 15-puzzle has $15!/2$ "solvable" states which is ~$6.5*10^11$. Thus, most algorithms focus on sub-optimal solutions which are fast to train. 
+
+The $N^2-1$-puzzle is an NP-hard problem, thus optimal solutions in reasonable time are nearly impossible.
+
+To read further about the puzzle and its solutions, here is an interesting [paper][https://pdfs.semanticscholar.org/d3f3/fa96e6414585900422467c0042c4665dd98b.pdf]
