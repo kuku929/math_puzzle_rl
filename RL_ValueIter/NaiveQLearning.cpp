@@ -15,48 +15,6 @@ using namespace std;
 int R(const state &curr_state, const state &next_state, const vector<string> &policy, int current_row){
 	if(isFinal(next_state,current_row))return 100; 
 	if(isFinal(curr_state,current_row))return -100;
-	//int next_state_index=index_map[next_state.compressed_state];
-	//if(policy[next_state_index]==curr_state.compressed_state)return -100;
-
-
-	//int reward=0;
-	//if(current_row == 2){
-		//int curr_blank_position=curr_state.find_number(1);
-		//int next_blank_position=next_state.find_number(1);
-		//int tile_swapped = curr_state.compressed_state[next_blank_position]-'A';	
-		//int row=(tile_swapped-1)/4;
-		//int col=(tile_swapped-1)%4;
-
-		//reward += abs(row-next_blank_position/4)+abs(col-next_blank_position%4);
-		//reward -= abs(row-curr_blank_position/4)+abs(col-curr_blank_position%4);
-	//}
-	//else{
-		//int curr_blank_position=curr_state.find_number(15);
-		//int next_blank_position=next_state.find_number(15);
-		//int tile_swapped = curr_state.compressed_state[next_blank_position]-'A';	
-		//if(tile_swapped!=0){
-			//int row=(tile_swapped-1)/4;
-			//int col=(tile_swapped-1)%4;
-
-			//reward += abs(row-next_blank_position/4)+abs(col-next_blank_position%4);
-			//reward -= abs(row-curr_blank_position/4)+abs(col-curr_blank_position%4);
-		//}
-		//else{
-			//vector<int> not_in_place;
-			//for(int i=4*current_row;i<4*current_row+4;i++){
-				//if(curr_state.compressed_state[i]!=i+1+'A')not_in_place.push_back(i+1);
-			//}
-			//for(auto t: not_in_place){
-				//int position=curr_state.find_number(t);
-				//int row=(position)/4;
-				//int col=position%4;
-
-				//reward -= abs(row-next_blank_position/4)+abs(col-next_blank_position%4);
-				//reward += abs(row-curr_blank_position/4)+abs(col-curr_blank_position%4);
-			//}
-
-		//}
-	//}
 	return 0;
 }
 

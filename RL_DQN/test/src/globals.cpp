@@ -2,10 +2,10 @@
 #include <vector>
 #include <string>
 #include <cstdio>
-//what are you changing:
-float INITIAL_LEARNING_RATE=1.0f;
-float GRAD_DECAY=0.0f;
-int OPTIMIZER=0;
 
-std::vector<int> LAYER_SIZES({2,4,2,1});
-std::vector<std::string> ACTIVATION_FUNCTIONS({"ReLU","sigmoid", "Linear"});
+float INITIAL_LEARNING_RATE=0.0009f;
+float GRAD_DECAY=0.9f;
+int OPTIMIZER=1;
+
+std::vector<size_t> LAYER_SIZES({2,3,1,1});
+std::vector<std::string> ACTIVATION_FUNCTIONS({"ReLU","ReLU","Linear"});

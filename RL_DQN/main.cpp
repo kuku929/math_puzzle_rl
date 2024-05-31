@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <chrono>
 #include <cstdio>
+#include <stdexcept>
 float out_of_bounds;
 float in_bound;
 float completion_reward;
@@ -15,7 +16,6 @@ using namespace std;
 using Clock = std::chrono::steady_clock;
 using Second = std::chrono::duration<double, std::ratio<1> >;
 std::ofstream dout("debug.txt");
-//std::ofstream plt("plot.txt");
 int main(int argc, char **argv){
 	std::chrono::time_point<Clock> m_beg = Clock::now();
 	/*
@@ -34,6 +34,27 @@ int main(int argc, char **argv){
 		} 
 	}
 
+	/*
+	 *sanity check 
+	 */
+	vector<string> allowed_activation_func = {"sigmoid", "Linear", "ReLU", "Leaky"}; 
+	try{
+		//checking if layer sizes are within bounds
+		for(const size_t layer_size : LAYER_SIZES){
+			if(!layer_size)
+				throw invalid_argument("layer size cannot be 0!");
+		}
+
+		//checking for invalid activation function
+		for(const string &function : ACTIVATION_FUNCTIONS){
+			if(find(allowed_activation_func.begin(), allowed_activation_func.end(),function) == allowed_activation_func.end())
+				throw invalid_argument("invalid activation function! the following are supported:\n- sigmoid\n- Linear\n- ReLU\n- Leaky");
+		}
+	}
+	catch(invalid_argument &e){
+		cerr << e.what() << '\n';
+		return -1;
+	}
 
 	/*
 	 *instantiating the actor
@@ -43,8 +64,9 @@ int main(int argc, char **argv){
 	actor a;
 	if(flag){
 		ifstream weights_in("weights.txt");
-		string s; while(weights_in>>s){
-			if(s=="second"){
+		string s; 
+		while(weights_in>>s){
+			if(s=="layer"){
 				weights.push_back(sub_weights);
 				bias.push_back(sub_bias);
 				sub_weights.clear();
@@ -58,8 +80,6 @@ int main(int argc, char **argv){
 			}
 			sub_weights.push_back(stof(s));
 		}
-	weights.push_back(sub_weights);
-	bias.push_back(sub_bias);
 	weights_in.close();
 	actor a_copy(weights, bias);
 	a=a_copy; //kinda dumb but whatever
@@ -76,14 +96,21 @@ int main(int argc, char **argv){
 		string s;
 		while(getline(fin,s)){
 			training_set.push_back(s);
+			try{
+				if(s.size()*s.size() != LAYER_SIZES.front())
+					throw invalid_argument("training data size does not match input size!");
+			}
+			catch(invalid_argument &e){
+				cout << e.what() << '\n';
+				return -1;
+			}
 		}
 		fin.close();
 		
-		//a.print_weights();
 		size_t progress_count=0;	
 		int count=0;
 		
-		float EPSILON_DECAY_FACTOR = 1.0f/static_cast<float>(training_set.size());
+		float EPSILON_DECAY_FACTOR = 0.5f/static_cast<float>(training_set.size());
 		//cout <<"decay factor: "<< EPSILON_DECAY_FACTOR<<'\n';
 		for(auto data: training_set){
 			dout << "-------epoch "<< EPOCH<< " starting------\n";
@@ -99,18 +126,20 @@ int main(int argc, char **argv){
 			int t=0; //time
 			int verbose=0;
 
+			//debugging
 			dout << "EPSILON : "<< EPSILON<<'\n';
 			dout << "START STATE\n";
 			print_state(curr_state);
 
 			for(;t<STEPS_PER_EPISODE;t++){
-				if(t>STEPS_PER_EPISODE-6 && verbose==0)verbose=1;	
+				//if(t>STEPS_PER_EPISODE-6 && verbose==0)verbose=1;	
 				if(isFinal(curr_state)){
 					dout << "final state reached, aborting\n";
 					break;
 				}
 				a.act(curr_state, 0);
-				if(t%5==0)a.learn(verbose);
+				if(t%5==0)
+					a.learn(verbose);
 				
 				count++;
 				if(count==UPDATE_COUNT){
@@ -127,8 +156,12 @@ int main(int argc, char **argv){
 
 		}
 	}
+
+	////useful information
 	std::cout << "\ntime taken: "<<std::chrono::duration_cast<Second>(Clock::now() - m_beg).count()<<'\n'; 
 	std::cout << "no of iterations: " << total_loop_time << '\n';
+
+
 	dout << "\n\n-----playing-----\n\n";
 	ifstream input("../data/input.txt");
 	string start_state="";
@@ -148,5 +181,4 @@ int main(int argc, char **argv){
 		}
 	}
 	dout.close();
-	//plt.close();
 }

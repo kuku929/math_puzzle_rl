@@ -16,13 +16,13 @@ struct Network{
 	vector<vector<float>> bias;
 	vector<vector<float>> gradient_sum;
 	vector<vector<float>> bias_grad_sum;
-	vector<int> layer_sizes;
+	vector<size_t> layer_sizes;
 	map<string, activation_funcptr> activation_func_map;
 	vector<string> activation_func;
 
 	Network(){};
-	Network(vector<int> &l, vector<string> &activ_func);
-	Network(vector<int> &l, vector<string> &activ_func, vector<vector<float>> &w,vector<vector<float>> &b); 
+	Network(vector<size_t> &l, vector<string> &activ_func);
+	Network(vector<size_t> &l, vector<string> &activ_func, vector<vector<float>> &w,vector<vector<float>> &b); 
 	Network& operator=(const Network&) = default;
 	
 	vector<float> predict(const vector<float> &input);

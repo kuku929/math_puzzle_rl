@@ -1,4 +1,6 @@
 #include <cstdio>
+#include <vector>
+#include <string>
 // model parameters
 extern float EPSILON;
 extern float INITIAL_LEARNING_RATE;
@@ -14,6 +16,5 @@ extern int EPOCH;
 extern int OPTIMIZER;
 
 //Network parameters
-extern int INPUT_SIZE;
-extern int HIDDEN_SIZE;
-extern int OUTPUT_SIZE;
+extern std::vector<size_t> LAYER_SIZES;
+extern std::vector<std::string> ACTIVATION_FUNCTIONS;

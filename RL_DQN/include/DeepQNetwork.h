@@ -29,11 +29,11 @@ struct actor{
 	deque<state_action> experience_replay;	
 	Network actor_net, target_net;
 
-	actor():experience_replay(), actor_net(Network(INPUT_SIZE, HIDDEN_SIZE, OUTPUT_SIZE)){
+	actor():experience_replay(), actor_net(Network(LAYER_SIZES, ACTIVATION_FUNCTIONS)){
 		this->target_net=actor_net;
 	};
 
-	actor(vector<vector<float>> &weights, vector<vector<float>> &bias):experience_replay(), actor_net(Network(INPUT_SIZE, HIDDEN_SIZE, OUTPUT_SIZE,weights, bias)){
+	actor(vector<vector<float>> &weights, vector<vector<float>> &bias):experience_replay(), actor_net(Network(LAYER_SIZES, ACTIVATION_FUNCTIONS,weights, bias)){
 		this->target_net=actor_net;
 	};
 

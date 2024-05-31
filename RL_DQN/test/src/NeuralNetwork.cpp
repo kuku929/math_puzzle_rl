@@ -3,15 +3,17 @@
 #include <vector>
 #include <string>
 #include <cmath> //pow
+#include <stdexcept>
+#include <cstdio>
 #include <chrono>
 #include <iomanip>
 using namespace std;
 extern ofstream dout;
-
-Network::Network(vector<int> &l, vector<string> &activ_func) : layer_sizes(l), activation_func(activ_func){
+Network::Network(vector<size_t> &l, vector<string> &activ_func) : layer_sizes(l), activation_func(activ_func){
 	float range = 2.0;//4*pow(6.0/(float)(input_size+output_size), 0.5); 
 	//srand(chrono::high_resolution_clock::now().time_since_epoch().count());
-	
+
+	//allocating memory
 	this->weights = vector<vector<float>>(static_cast<int>(layer_sizes.size()) - 1);
 	this->bias = vector<vector<float>>(static_cast<int>(layer_sizes.size()) - 1);
 	this->gradient_sum = vector<vector<float>>(static_cast<int>(layer_sizes.size()) - 1);
@@ -19,14 +21,14 @@ Network::Network(vector<int> &l, vector<string> &activ_func) : layer_sizes(l), a
 
 	//iterate each layer starting from 0th layer to second to last layer
 	for(size_t layer_index=0; layer_index < layer_sizes.size()-1; ++layer_index){ 
-		const int current_layer_size = layer_sizes[layer_index];
-		const int next_layer_size = layer_sizes[layer_index+1];
+		const size_t current_layer_size = layer_sizes[layer_index];
+		const size_t next_layer_size = layer_sizes[layer_index+1];
 		
-		//set the bias and weights
-		for(int i=0;i<next_layer_size;++i){
+		//set the bias and weights and the gradient sums
+		for(size_t i=0;i<next_layer_size;++i){
 			this->bias[layer_index].push_back(0.0f); //bias for the next layer
 			this->bias_grad_sum[layer_index].push_back(0.0f); 
-			for(int j=0;j<current_layer_size;++j){
+			for(size_t j=0;j<current_layer_size;++j){
 				float normalized_value = static_cast<float>(rand())/static_cast<float>(RAND_MAX)-0.5f; //between (-0.5,0.5)	
 				this->weights[layer_index].push_back(normalized_value*range); 
 				this->gradient_sum[layer_index].push_back(0.0f); 
@@ -40,23 +42,27 @@ Network::Network(vector<int> &l, vector<string> &activ_func) : layer_sizes(l), a
 	activation_func_map.emplace("Leaky", &Leaky);
 	activation_func_map.emplace("Linear", &Linear);
 
+
 }
 
-Network::Network(vector<int> &l, vector<string> &activ_func, vector<vector<float>> &w, vector<vector<float>> &b):layer_sizes(l), activation_func(activ_func){
+Network::Network(vector<size_t> &l, vector<string> &activ_func, vector<vector<float>> &w, vector<vector<float>> &b):layer_sizes(l), activation_func(activ_func){
 	this->weights=w;
 	this->bias=b;
+
+	//allocating memory
 	this->gradient_sum = vector<vector<float>>(static_cast<int>(layer_sizes.size()) - 1);
 	this->bias_grad_sum = vector<vector<float>>(static_cast<int>(layer_sizes.size()) - 1);
+	
 
-	//explicitly setting the values to 0, maybe the default are not 0
+	//explicitly setting the values to 0, maybe the default is not 0
 	for(size_t layer_index=0; layer_index < layer_sizes.size()-1; ++layer_index){
-		const int current_layer_size = layer_sizes[layer_index];
-		const int next_layer_size = layer_sizes[layer_index+1];
+		const size_t current_layer_size = layer_sizes[layer_index];
+		const size_t next_layer_size = layer_sizes[layer_index+1];
 		
 		//set the gradient sums 
-		for(int i=0;i<next_layer_size;++i){
+		for(size_t i=0;i<next_layer_size;++i){
 			this->bias_grad_sum[layer_index].push_back(0.0f); 
-			for(int j=0;j<current_layer_size;++j){
+			for(size_t j=0;j<current_layer_size;++j){
 				this->gradient_sum[layer_index].push_back(0.0f); 
 			}
 		}
@@ -70,22 +76,23 @@ Network::Network(vector<int> &l, vector<string> &activ_func, vector<vector<float
 
 vector<float> Network::predict(const vector<float> &input){
 	//stores all the outputs of previous layers, better than keeping two vectors input and output,which requires copying after each iteration
-	vector<vector<float>> layer_outputs(layer_sizes.size()); 
+	
+
+	vector<vector<float>> layer_outputs(layer_sizes.size());  //stores the outputs of each layer
 	layer_outputs[0] = input;
-	float weighted_sum;
+	float weighted_sum; //stores the weighted sum for a node in a layer
 
 	//start with the second layer and go until the output layer
 	for(size_t layer_index=1; layer_index < layer_sizes.size(); ++layer_index){
-		const int current_layer_size = layer_sizes[layer_index]; 
-		const int prev_layer_size = layer_sizes[layer_index-1];
+		const size_t current_layer_size = layer_sizes[layer_index]; 
+		const size_t prev_layer_size = layer_sizes[layer_index-1];
 
-		for(int i=0;i<current_layer_size;++i){
-			weighted_sum = this->bias[layer_index-1][i];
-			for(int j=0;j<prev_layer_size;++j){
-				weighted_sum += weights[layer_index-1][i*prev_layer_size + j]*layer_outputs[layer_index-1][j];
+		for(size_t i=0;i<current_layer_size;++i){
+			weighted_sum = this->bias[layer_index-1][i]; //start with the bias for that node
+			for(size_t j=0;j<prev_layer_size;++j){
+				weighted_sum += weights[layer_index-1][i*prev_layer_size + j]*layer_outputs[layer_index-1][j]; //adding weighted inputs
 			}
-			//ATTENTION : all are sigmoid, change it!
-			layer_outputs[layer_index].push_back(activation_func_map[activation_func[layer_index-1]](weighted_sum));
+			layer_outputs[layer_index].push_back(activation_func_map[activation_func[layer_index-1]](weighted_sum)); //saving to layer_outputs
 		}
 	}
 
@@ -93,37 +100,41 @@ vector<float> Network::predict(const vector<float> &input){
 }
 
 void Network::fit(const vector<float> &input, const vector<float> &true_output, const float learning_rate,const float grad_decay, int verbose, int optimize){
-	/*
-	 *sanity check
-	 */
-	if(input.size()!=layer_sizes.front()){
-		dout << "Mismatch of input dimensions!\n";
-		return;
-	}
-	
 
 	/*
 	 *predicting
 	 */
-	vector<vector<float>> layer_outputs(layer_sizes.size()); 
+	
+	vector<vector<float>> layer_outputs(layer_sizes.size());  //stores the outputs of each layer
 	layer_outputs[0] = input;
-	float weighted_sum;
+	float weighted_sum; //stores the weighted sum for a node in a layer
+
 
 	//start with the second layer and go until the output layer
 	for(size_t layer_index=1; layer_index < layer_sizes.size(); ++layer_index){
-		const int current_layer_size = layer_sizes[layer_index]; 
-		const int prev_layer_size = layer_sizes[layer_index-1];
+		const size_t current_layer_size = layer_sizes[layer_index]; 
+		const size_t prev_layer_size = layer_sizes[layer_index-1];
 
-		for(int i=0;i<current_layer_size;++i){
-			weighted_sum = this->bias[layer_index-1][i];
-			for(int j=0;j<prev_layer_size;++j){
-				weighted_sum += this->weights[layer_index-1][i*prev_layer_size + j]*layer_outputs[layer_index-1][j];
+		for(size_t i=0;i<current_layer_size;++i){
+			weighted_sum = this->bias[layer_index-1][i]; //start with the bias for that node
+			for(size_t j=0;j<prev_layer_size;++j){
+				weighted_sum += this->weights[layer_index-1][i*prev_layer_size + j]*layer_outputs[layer_index-1][j]; //adding weighted inputs
 			}
-			//ATTENTION : all are sigmoid, change it!
-			layer_outputs[layer_index].push_back(activation_func_map[activation_func[layer_index-1]](weighted_sum));
+			layer_outputs[layer_index].push_back(activation_func_map[activation_func[layer_index-1]](weighted_sum)); //saving to layer_outputs
 		}
 	}
-	
+
+	if(verbose){
+		dout << "TRUE OUTPUT\n";
+		for(const auto output : true_output)
+			dout << output << ' ';
+		dout << '\n';
+		dout << "PREDICTION\n";
+		dout << "before : ";
+		for(const auto output : layer_outputs.back())
+			dout << output << ' ';
+		dout << '\n';
+	}
 
 	/*
 	 *backpropagation
@@ -132,33 +143,115 @@ void Network::fit(const vector<float> &input, const vector<float> &true_output, 
 	//this will store the deltas that will be propagated backwards
 	vector<vector<float>> layer_deltas(layer_sizes.size() - 1);
 	
+
 	//storing the initial deltas
-	for(int i=0;i < layer_sizes.back();++i){
-		layer_deltas[layer_sizes.size() - 2].push_back((true_output[i]-layer_outputs.back()[i])*Fdash(layer_outputs.back()[i], activation_func.back()));
-	}
-
-	//backpropagating the error
-	float layer_delta_sum;
-	for(int layer_index=layer_sizes.size() - 2;layer_index > 0 ;--layer_index){
-		const int current_layer_size = layer_sizes[layer_index]; 
-		const int prev_layer_size = layer_sizes[layer_index+1]; //since iterating backwards, +1 is previous
-		for(int i=0;i < current_layer_size; ++i){ //iterate through each node in the layer
-			layer_delta_sum = 0.0f;
-			for(int j=0; j<prev_layer_size; ++j){ //find the back-propagated deltas
-				layer_delta_sum += this->weights[layer_index][j*current_layer_size + i]*layer_deltas[layer_index][j]; 
-				weights[layer_index][j*current_layer_size + i] += learning_rate*layer_deltas[layer_index][j]*layer_outputs[layer_index][i];
-			}
-			layer_deltas[layer_index-1].push_back(layer_delta_sum*Fdash(layer_outputs[layer_index][i], activation_func[layer_index-1]));
-		}
-	}
-
-	//update first layer weights
-	for(int i=0; i< layer_sizes[1]; ++i){
-		for(int j=0; j<layer_sizes[0]; ++j){
-			weights[0][i*layer_sizes[0] + j] += learning_rate*layer_deltas[0][i]*layer_outputs[0][j];
-		}
-	}
+	//assuming the true_output is 0 0 true_value 0
+	//this piece of code is not generalized which I do not like, but it will be faster
 	
+	for(size_t i=0;i < layer_sizes.back();++i){
+			layer_deltas[layer_sizes.size() - 2].push_back((true_output[i]-layer_outputs.back()[i])*Fdash(layer_outputs.back()[i], activation_func.back()));
+	}
+
+	if(verbose){
+		dout << "deltas : ";
+		for(const auto delta : layer_deltas[layer_sizes.size() - 2])
+			dout << delta << ' ';
+		dout << '\n';
+	}
+
+
+	float layer_delta_sum; //stores the backwards propagated sum of delta for a node in a layer
+	float sq_layer_output; //stores the square of the layer output (for optimizer)
+	float sq_layer_delta; //stores the square of the layer delta (for optimizer)
+
+	if(optimize){
+		//backpropagating the error
+		for(size_t layer_index=layer_sizes.size() - 2;layer_index > 0 ;--layer_index){
+			const size_t current_layer_size = layer_sizes[layer_index]; 
+			const size_t prev_layer_size = layer_sizes[layer_index+1]; //since iterating backwards, +1 is previous
+
+			//updating weights connected to first node so as to update biases as well
+			layer_delta_sum = 0.0f;
+			sq_layer_output = layer_outputs[layer_index][0]*layer_outputs[layer_index][0];
+			for(size_t j=0; j<prev_layer_size; ++j){ //find the back-propagated deltas
+				layer_delta_sum += this->weights[layer_index][j*current_layer_size]*layer_deltas[layer_index][j]; 
+				sq_layer_delta = layer_deltas[layer_index][j]*layer_deltas[layer_index][j];
+
+				this->bias_grad_sum[layer_index][j] = this->bias_grad_sum[layer_index][j]*grad_decay + (1-grad_decay)*sq_layer_delta;
+				this->gradient_sum[layer_index][j*current_layer_size] = this->gradient_sum[layer_index][j*current_layer_size]*grad_decay + (1-grad_decay)*sq_layer_delta*sq_layer_output;
+				this->weights[layer_index][j*current_layer_size] += learning_rate*layer_deltas[layer_index][j]*layer_outputs[layer_index][0]/(static_cast<float>(pow(gradient_sum[layer_index][j*current_layer_size], 0.5)) + 1e-10f);
+				this->bias[layer_index][j] += learning_rate*layer_deltas[layer_index][j]/(static_cast<float>(pow(bias_grad_sum[layer_index][j], 0.5))+1e-5f);
+				//cout << "DEBUG: "<<sq_layer_output<< '\n';
+			}
+			
+			layer_deltas[layer_index-1].push_back(layer_delta_sum*Fdash(layer_outputs[layer_index][0], activation_func[layer_index-1]));
+
+			//since i=0 is done separately to update bias, start from i=1
+			for(size_t i=1;i < current_layer_size; ++i){ //iterate through each node in the layer
+				layer_delta_sum = 0.0f;
+				sq_layer_output = layer_outputs[layer_index][i]*layer_outputs[layer_index][i];
+
+				for(size_t j=0; j<prev_layer_size; ++j){ //find the back-propagated deltas
+					layer_delta_sum += this->weights[layer_index][j*current_layer_size + i]*layer_deltas[layer_index][j]; 
+					sq_layer_delta = layer_deltas[layer_index][j]*layer_deltas[layer_index][j];
+
+					this->gradient_sum[layer_index][j*current_layer_size + i] = this->gradient_sum[layer_index][j*current_layer_size + i]*grad_decay + (1-grad_decay)*sq_layer_delta*sq_layer_output;
+					this->weights[layer_index][j*current_layer_size + i] += learning_rate*layer_deltas[layer_index][j]*layer_outputs[layer_index][i]/(static_cast<float>(pow(gradient_sum[layer_index][j*current_layer_size + i], 0.5)) + 1e-5f);
+				}
+				layer_deltas[layer_index-1].push_back(layer_delta_sum*Fdash(layer_outputs[layer_index][i], activation_func[layer_index-1]));
+			}
+		}
+
+		//update first layer weights and bias
+		for(size_t i=0; i < layer_sizes[1]; ++i){
+			sq_layer_delta = layer_deltas[0][i]*layer_deltas[0][i];
+			for(size_t j=0; j < layer_sizes[0]; ++j){
+				sq_layer_output = layer_outputs[0][j]*layer_outputs[0][j];
+				this->gradient_sum[0][i*layer_sizes[0] + j] = this->gradient_sum[0][i*layer_sizes[0] + j]*grad_decay + (1-grad_decay)*sq_layer_delta*sq_layer_output;
+				this->weights[0][i*layer_sizes[0] + j] += learning_rate*layer_deltas[0][i]*layer_outputs[0][j]/(static_cast<float>(pow(this->gradient_sum[0][i*layer_sizes[0]+j],0.5))+1e-10f);
+			}
+			this->bias_grad_sum[0][i] = this->bias_grad_sum[0][i]*grad_decay + (1-grad_decay)*sq_layer_delta;
+			this->bias[0][i] += learning_rate*layer_deltas[0][i]/(static_cast<float>(pow(this->bias_grad_sum[0][i], 0.5)) + 1e-10f);
+		}
+	}
+
+	else{
+		//backpropagating the error
+		for(size_t layer_index=layer_sizes.size() - 2;layer_index > 0 ;--layer_index){
+			const size_t current_layer_size = layer_sizes[layer_index]; 
+			const size_t prev_layer_size = layer_sizes[layer_index+1]; //since iterating backwards, +1 is previous
+										
+			//updating weights connected to first node so as to update biases as well
+			layer_delta_sum=0.0f;
+			for(size_t j=0; j<prev_layer_size; ++j){ //find the back-propagated deltas
+				layer_delta_sum += this->weights[layer_index][j*current_layer_size]*layer_deltas[layer_index][j]; 
+
+				this->weights[layer_index][j*current_layer_size] += learning_rate*layer_deltas[layer_index][j]*layer_outputs[layer_index][0];
+				this->bias[layer_index][j] += learning_rate*layer_deltas[layer_index][j];
+			}
+			layer_deltas[layer_index-1].push_back(layer_delta_sum*Fdash(layer_outputs[layer_index][0], activation_func[layer_index-1]));
+
+			//since i=0 is done separately to update bias, start from i=1
+			for(size_t i=1;i < current_layer_size; ++i){ //iterate through each node in the layer
+				layer_delta_sum = 0.0f;
+
+				for(size_t j=0; j<prev_layer_size; ++j){ //find the back-propagated deltas
+					layer_delta_sum += this->weights[layer_index][j*current_layer_size + i]*layer_deltas[layer_index][j]; 
+
+					//only updating weights as bias is done
+					this->weights[layer_index][j*current_layer_size + i] += learning_rate*layer_deltas[layer_index][j]*layer_outputs[layer_index][i];
+				}
+				layer_deltas[layer_index-1].push_back(layer_delta_sum*Fdash(layer_outputs[layer_index][i], activation_func[layer_index-1]));
+			}
+		}
+		//update first layer weights
+		for(size_t i=0; i < layer_sizes[1]; ++i){
+			for(size_t j=0; j < layer_sizes[0]; ++j){
+				this->weights[0][i*layer_sizes[0] + j] += learning_rate*layer_deltas[0][i]*layer_outputs[0][j];
+			}
+			this->bias[0][i] += learning_rate*layer_deltas[0][i];
+		}
+	}
 	return;
 }
 
@@ -196,14 +289,7 @@ float Fdash(float output, string activation_function){
 	}
 	
 	dout << "unidentified activation function!\n";
+	//bad design but i am asserting during construction 
 	return 0.0;
 }
 
-////void beautiful_print(const vector<float> &input, vector<float> &hidden_weighted_sum, vector<float> &hidden_output, vector<float> &output_weighted_sum, vector<float> &output,vector<vector<float>> weights, vector<vector<float>> bias){
-	////cout << setprecision(1)<< input[0] << " ---"<<weights[0][0]<<'|'<<weights[0][1]<<"--> "<<bias[0][0]<<'/'<<hidden_output[0];
-	////cout << "\n                     "<<weights[1][0];
-	////cout << "\n                       |--->"<<bias[1][0]<<'/'<<output[0]<<'\n';
-	////cout << "                     "<<weights[1][1]<<'\n';
-	////cout << input[1] << " ---"<<weights[0][2]<<'|'<<weights[0][3]<<"--> "<<bias[0][1]<<'/'<<hidden_output[1]<<'\n';
-	////cout << setprecision(6);
-////}

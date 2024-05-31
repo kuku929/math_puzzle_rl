@@ -2,7 +2,7 @@
 ninja
 ./or 1000 0 > epoch_test_data.txt
 echo 'running tests...'
-for i in {1..200}
+for i in {100..5000..100}
 do
 	./or $i 0 >> epoch_test_data.txt
 done
