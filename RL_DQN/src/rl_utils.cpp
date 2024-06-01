@@ -31,27 +31,17 @@ bool isFinal(const state& given_state){
 	return true;
 }
 
-void print_all_states(unordered_map<string,vector<state>>& possible_states){
+void print_state(const state& given_state){
 	/*
-	 *prints all the states in an array
+	 *prints the state in a matrix form
 	 */
-	for(auto t=possible_states.begin();t!=possible_states.end();t++){
-		cout << "current state\n";
-		for(int i=0;i<SIZE;i++){
-			for(int j=0;j<SIZE;j++)cout << static_cast<int>(t->first[SIZE*i+j]-'A')<<' ';
-			cout << '\n';
-		}
-		cout<<"******************\n";
-		for(auto u: t->second){
-			for(int i=0;i<SIZE;i++){
-				for(int j=0;j<SIZE;j++)cout <<static_cast<int>(u.compressed_state[SIZE*i+j]-'A') <<' ';
-				cout<<'\n';
-			}
-			cout<<"********************\n";
-		}
+	for(int i=0;i<SIZE;i++){
+		for(int j=0;j<SIZE;j++)dout << static_cast<int>(given_state.compressed_state[SIZE*i+j]-'A')<<' ';
+		dout << '\n';
 	}
+	dout << "*******************\n";
+	return;
 }
-
 void beautiful_print(const state& some_state){
 	/*
 	 * sexy print which,

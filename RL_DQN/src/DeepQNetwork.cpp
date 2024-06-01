@@ -33,9 +33,9 @@ void actor::act(state &some_state, int verbose){
 
 	vector<float> q_values=this->actor_net.predict(input); //finding Q(s,a)
 	if(verbose){
-		dout << "q_values: ";
-		for(auto t: q_values)dout << t<<' ';
-		dout << "\n\n";
+		cout << "q_values: " << flush;
+		for(auto t: q_values)cout << t<<' ' << flush;
+		cout << "\n\n" << flush;
 	}
 	int action = EpsilonGreedy(q_values, EPSILON, 0); //choosing an action
 

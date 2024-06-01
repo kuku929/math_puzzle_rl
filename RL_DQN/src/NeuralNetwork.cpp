@@ -185,7 +185,6 @@ void Network::fit(const vector<float> &input, const vector<float> &true_output, 
 		}
 		else{
 			if(verbose){
-				pout << (true_output[i] - layer_outputs.back()[i])*(true_output[i] - layer_outputs.back()[i]) << '\n';
 				//printing delta
 				dout << (true_output[i] - layer_outputs.back()[i]) << ' ';
 			}
