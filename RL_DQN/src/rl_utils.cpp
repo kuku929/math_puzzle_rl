@@ -1,3 +1,10 @@
+/*
+ *@Author: Krutarth Patel                                           
+ *@Date: 1st June 2024
+ *@Description : implementation of tools required for training on the puzzle
+ *		helpful functions defined for this specific RL task
+ */
+
 #include "rl_utils.h"
 #include <iostream> 
 #include <fstream> 
@@ -10,10 +17,11 @@
 #include <unistd.h>
 using namespace std;
 extern ofstream dout;
-int SIZE=3;
+int SIZE=2;
 bool isFinal(const state& given_state){
 	/*
-	 *checks if the puzzle has reached final state
+	 * iterates through the puzzle comparing with the final state
+	 * returns true if final, else false
 	 */
 	for(int i=0;i<SIZE*SIZE-1;i++){
 		if(given_state.compressed_state[i]!=static_cast<char>(i+1+static_cast<int>('A')))
@@ -21,18 +29,6 @@ bool isFinal(const state& given_state){
 	}
 
 	return true;
-}
-
-void print_state(const state& given_state){
-	/*
-	 *prints the state in a matrix form
-	 */
-	for(int i=0;i<SIZE;i++){
-		for(int j=0;j<SIZE;j++)dout << static_cast<int>(given_state.compressed_state[SIZE*i+j]-'A')<<' ';
-		dout << '\n';
-	}
-	dout << "*******************\n";
-	return;
 }
 
 void print_all_states(unordered_map<string,vector<state>>& possible_states){
@@ -56,19 +52,32 @@ void print_all_states(unordered_map<string,vector<state>>& possible_states){
 	}
 }
 
-void beautiful_print(int arr[]){
+void beautiful_print(const state& some_state){
 	/*
-	 *sexy print
+	 * sexy print which,
+	 * adjusts to the size of the puzzle
 	 */
-	cout << "_____________\n"<<flush;
+	for(int k=0;k<(3*SIZE);k++){
+		cout << "-";
+	}
+	cout << "\n"<<flush;
 	for(int i=0;i<SIZE;i++){
 		for(int j=0;j<SIZE;j++){
-			if(arr[SIZE*i+j]<10)cout <<"| "<< arr[SIZE*i+j]<<flush;
-			else cout<< "|"<<arr[SIZE*i+j]<<flush;
+			int cell_value = static_cast<int>(some_state.compressed_state[SIZE*i+j]) - 'A';
+			if(cell_value<10)cout <<"| "<< cell_value<<flush;
+			else cout<< "|"<<cell_value<<flush;
 		}
-		cout << "|\n____________\n"<<flush;
+		cout << "|\n";
+		for(int k=0;k<(3*SIZE);k++){
+			cout << "-";
+		}
+		cout << "\n"<<flush;
 	}
-	cout << "\n\n********************\n\n"<<flush;
+	cout << "\n\n";
+	for(int i=0;i<5*SIZE;i++){
+		cout << "*";
+	}
+	cout << "\n\n"<<flush;
 	usleep(500000);
 	return;
 }
@@ -136,3 +145,4 @@ void move(state &curr_state, int action){
 	}
 	return;
 }
+

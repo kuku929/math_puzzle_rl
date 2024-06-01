@@ -45,7 +45,7 @@ struct state{
 	};
 	state& operator=(const state&) = default;
 
-	int find_number(int n)const{
+	int find_number(int n)const{ //find the number n in the puzzle board
 		auto itr = find(this->compressed_state.begin(), this->compressed_state.end(), char(n+int('A')));
 		if(itr!=this->compressed_state.end())return (int(itr-this->compressed_state.begin())); //normal subtraction gives long int?
 		return -1;
@@ -54,13 +54,8 @@ struct state{
 
 };
 
-void findMoves(state &curr_state, vector<state> &connected_states, int current_row);
-void findStates(unordered_map<string, vector<state>> &possible_states, int current_row);
-bool isFinal(const state &given_state);
-void print_state(const state &given_state);
-void print_all_states(unordered_map<string,vector<state>>& possible_states);
-int find_the_move(state &first_state, state &next_state, int current_row);
-void move_puzzle(int blank_position, int move_no, int arr[]);
-void beautiful_print(int arr[]);
-vector<int> possible_moves(const state &curr_state);
-void move(state &curr_state, int action);
+bool isFinal(const state &given_state); //check if final state reached
+void print_state(const state &given_state); //print a state
+void beautiful_print(const state& some_state); //print a state, beautifully
+vector<int> possible_moves(const state &curr_state); //find all possible moves in a state
+void move(state &curr_state, int action); //move the puzzle according to the action

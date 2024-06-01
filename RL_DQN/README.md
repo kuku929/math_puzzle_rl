@@ -76,3 +76,4 @@ Here is brief description of all the sub-directories :
         ```
         ./main -w -t
         ```
+the hyperparameters for the neural network are stored in /src/globals.cpp

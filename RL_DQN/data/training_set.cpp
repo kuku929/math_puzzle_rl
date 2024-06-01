@@ -5,7 +5,7 @@
 #include <chrono>
 #include <unistd.h>
 using namespace std;
-int SIZE = 3;
+int SIZE = 2;
 vector<int> possible_moves(int curr_blank_position){
 	/*
 	 *finds all the possible moves in the current state
@@ -150,6 +150,9 @@ int main(int argc, char **argv){
 		blank_position=SIZE*SIZE-1;
 
 		for(int j=0;j<size;++j){
+			for(int i=0;i<SIZE*SIZE-1;i++)a[i]=i+1; 
+			a[SIZE*SIZE-1]=0;
+			blank_position=SIZE*SIZE-1;
 			no_of_moves = min_moves + rand()%(max_moves-min_moves+1);
 			for(int i=0;i<no_of_moves;i++){ //moving
 				action_space=possible_moves(blank_position);
@@ -174,6 +177,10 @@ int main(int argc, char **argv){
 			blank_position=SIZE*SIZE-1;
 
 			for(int i=0;i<no_of_moves;i++){ //moving
+				for(int i=0;i<SIZE*SIZE-1;i++)a[i]=i+1; 
+				a[SIZE*SIZE-1]=0;
+				blank_position=SIZE*SIZE-1;
+
 				action_space=possible_moves(blank_position);
 				int action = rand()%action_space.size(); 
 				if(abs(prev_action-action_space[action])==2){ //if redundant move, do again
@@ -184,7 +191,6 @@ int main(int argc, char **argv){
 				prev_action=action_space[action];
 			}
 			no_of_moves=min_moves + (j*max_moves)/size; //we keep increasing the amount of shuffling 
-			//beautiful_print(a);
 
 			//saving
 			for(int i=0;i<SIZE*SIZE;i++)fout<<(char)(a[i]+'A');

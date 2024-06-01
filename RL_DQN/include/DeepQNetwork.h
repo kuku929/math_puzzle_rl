@@ -41,14 +41,11 @@ struct actor{
 	void act(state &some_state, int verbose); //does one move starting from some_state and logs it into experience
 	void learn(int verbose); //samples from experience log and updates the weights
 	void update_target(); //updates target network with current actor_net weights
-	void print_weights();
-	void save_weights(string weights_filename);
-	void print_target_weights();
-	float R(state &next_state);
+	void print_weights(); //prints actor weights in the debug log
+	void save_weights(string weights_filename); //saves the weights to a file
+	void print_target_weights(); //prints target weights in the debug log
+	float R(state &next_state); //reward function
 };
 
 int EpsilonGreedy(const vector<float> &q_values, float epsilon, int verbose);//const vector<int> &action_space);
-vector<float> normalize(const state &some_state);
-
-
-
+vector<float> normalize(const state &some_state); //normalizes input to be fed into the neural network for a forward pass

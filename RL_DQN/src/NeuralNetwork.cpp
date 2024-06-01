@@ -1,3 +1,10 @@
+/*
+ *@Author: Krutarth Patel                                           
+ *@Date: 1st June 2024
+ *@Description : implementation of Neural Network with RMSProp as an optional optimizer
+ *		definition of functions inside the Network struct
+ */
+
 #include "NeuralNetwork.h"
 #include <iostream>
 #include <vector>
@@ -9,8 +16,15 @@
 #include <iomanip>
 using namespace std;
 extern ofstream dout;
-ofstream pout("plt.txt");
 Network::Network(vector<size_t> &l, vector<string> &activ_func) : layer_sizes(l), activation_func(activ_func){
+	/*
+	 * initializes weights, bias and gradient sums.
+	 * weights are initialized randomly
+	 * bias is set to 0.0f
+	 * gradient sums are set to 1.0f instead of the usual 0.0f
+	 * reason being, initial learning rates are typically huge when set to 0.0f
+	 * which may not be better always.
+	 */
 	float range = 2.0;//4*pow(6.0/(float)(input_size+output_size), 0.5); 
 	//srand(chrono::high_resolution_clock::now().time_since_epoch().count());
 
@@ -47,6 +61,13 @@ Network::Network(vector<size_t> &l, vector<string> &activ_func) : layer_sizes(l)
 }
 
 Network::Network(vector<size_t> &l, vector<string> &activ_func, vector<vector<float>> &w, vector<vector<float>> &b):layer_sizes(l), activation_func(activ_func){
+	/*
+	 * initializes weights, bias and gradient sums.
+	 * weights and biases are initialized according to the input 
+	 * gradient sums are set to 1.0f instead of the usual 0.0f
+	 * reason being, initial learning rates are typically huge when set to 0.0f
+	 * which may not be better always.
+	 */
 	this->weights=w;
 	this->bias=b;
 
@@ -76,9 +97,11 @@ Network::Network(vector<size_t> &l, vector<string> &activ_func, vector<vector<fl
 }
 
 vector<float> Network::predict(const vector<float> &input){
-	//stores all the outputs of previous layers, better than keeping two vectors input and output,which requires copying after each iteration
-	
+	/*
+	 *returns a vector of the output of the final layer
+	 */
 
+	//stores all the outputs of previous layers, better than keeping two vectors input and output,which requires copying after each iteration
 	vector<vector<float>> layer_outputs(layer_sizes.size());  //stores the outputs of each layer
 	layer_outputs[0] = input;
 	float weighted_sum; //stores the weighted sum for a node in a layer
@@ -101,6 +124,9 @@ vector<float> Network::predict(const vector<float> &input){
 }
 
 void Network::fit(const vector<float> &input, const vector<float> &true_output, const float learning_rate,const float grad_decay, int verbose, int optimize){
+	/*
+	 * updates the weights and biases using backward propagation
+	 */
 
 	/*
 	 *predicting
@@ -190,9 +216,8 @@ void Network::fit(const vector<float> &input, const vector<float> &true_output, 
 
 				this->bias_grad_sum[layer_index][j] = this->bias_grad_sum[layer_index][j]*grad_decay + (1-grad_decay)*sq_layer_delta;
 				this->gradient_sum[layer_index][j*current_layer_size] = this->gradient_sum[layer_index][j*current_layer_size]*grad_decay + (1-grad_decay)*sq_layer_delta*sq_layer_output;
-				this->weights[layer_index][j*current_layer_size] += learning_rate*layer_deltas[layer_index][j]*layer_outputs[layer_index][0]/(static_cast<float>(pow(gradient_sum[layer_index][j*current_layer_size], 0.5)) + 1e-10f);
+				this->weights[layer_index][j*current_layer_size] += learning_rate*layer_deltas[layer_index][j]*layer_outputs[layer_index][0]/(static_cast<float>(pow(gradient_sum[layer_index][j*current_layer_size], 0.5)) + 1e-5f);
 				this->bias[layer_index][j] += learning_rate*layer_deltas[layer_index][j]/(static_cast<float>(pow(bias_grad_sum[layer_index][j], 0.5))+1e-5f);
-				//cout << "DEBUG: "<<sq_layer_output<< '\n';
 			}
 			
 			layer_deltas[layer_index-1].push_back(layer_delta_sum*Fdash(layer_outputs[layer_index][0], activation_func[layer_index-1]));
@@ -219,10 +244,10 @@ void Network::fit(const vector<float> &input, const vector<float> &true_output, 
 			for(size_t j=0; j < layer_sizes[0]; ++j){
 				sq_layer_output = layer_outputs[0][j]*layer_outputs[0][j];
 				this->gradient_sum[0][i*layer_sizes[0] + j] = this->gradient_sum[0][i*layer_sizes[0] + j]*grad_decay + (1-grad_decay)*sq_layer_delta*sq_layer_output;
-				this->weights[0][i*layer_sizes[0] + j] += learning_rate*layer_deltas[0][i]*layer_outputs[0][j]/(static_cast<float>(pow(this->gradient_sum[0][i*layer_sizes[0]+j],0.5))+1e-10f);
+				this->weights[0][i*layer_sizes[0] + j] += learning_rate*layer_deltas[0][i]*layer_outputs[0][j]/(static_cast<float>(pow(this->gradient_sum[0][i*layer_sizes[0]+j],0.5))+1e-5f);
 			}
 			this->bias_grad_sum[0][i] = this->bias_grad_sum[0][i]*grad_decay + (1-grad_decay)*sq_layer_delta;
-			this->bias[0][i] += learning_rate*layer_deltas[0][i]/(static_cast<float>(pow(this->bias_grad_sum[0][i], 0.5)) + 1e-10f);
+			this->bias[0][i] += learning_rate*layer_deltas[0][i]/(static_cast<float>(pow(this->bias_grad_sum[0][i], 0.5)) + 1e-5f);
 		}
 	}
 

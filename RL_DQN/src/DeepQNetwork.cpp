@@ -1,3 +1,10 @@
+/*
+ *@Author: Krutarth Patel                                           
+ *@Date: 1st June 2024
+ *@Description : implementation of Deep Q-Learning.
+ *		definition of functions inside the actor struct
+ */
+
 #include "NeuralNetwork.h"
 #include "DeepQNetwork.h"
 #include "rl_utils.h"
@@ -14,10 +21,15 @@ using namespace std;
 
 
 void actor::act(state &some_state, int verbose){
+	/*
+	 * does one move using epsilon greedy policy
+	 * pushes it to experience replay, which is a deque.
+	 *
+	 * (state_after_action, action_taken, resulting_reward ) --> experience replay
+	 * if the state_after_action is the final state, it is stored many times in an effort to reduce sparsity of reward
+	 * the size of the experience replay is also maintained by popping the front when required
+	 */
 	vector<float> input=normalize(some_state); //normalizing input between 0 to 1
-
-	//for(auto in : input ) cout << in << ' ';
-	//cout << '\n';
 
 	vector<float> q_values=this->actor_net.predict(input); //finding Q(s,a)
 	if(verbose){
@@ -26,6 +38,7 @@ void actor::act(state &some_state, int verbose){
 		dout << "\n\n";
 	}
 	int action = EpsilonGreedy(q_values, EPSILON, 0); //choosing an action
+
 	/*
 	 *finding the reward	
 	 */
@@ -42,7 +55,6 @@ void actor::act(state &some_state, int verbose){
 	/*
 	 *if final state, store many times in experience replay, idk if this will work
 	 */
-
 	if(reward == COMPLETION_REWARD){
 		for(int i=0;i<100;i++){
 			this->experience_replay.push_back(state_action(some_state, action, reward)); //saving to experience log
@@ -58,10 +70,11 @@ void actor::act(state &some_state, int verbose){
 }
 
 void actor::learn(int verbose){
-	//vector<int> interesting_array({0, 1, 3, 2});
-	
-	//state INTERESTING_STATE({1,2,3,4,5,6,7,0,8});
-
+	/*
+	 * calls fit function provided in the network
+	 * if verbose is set, prints stuff to the debug log
+	 *
+	 */
 	for(size_t i=0;i<BATCH_SIZE;i++){ 
 		size_t rand_index = rand()%(this->experience_replay.size());
 		state_action random_state = experience_replay[rand_index];
@@ -79,11 +92,9 @@ void actor::learn(int verbose){
 		float target_value;
 		if(reward==COMPLETION_REWARD){
 			target_value=reward; //if final state stop 
-			//dout << "FINAL STATE\n";
-			//verbose = 1; //if final state show in log
 		}
 		
-		////the ideal value now is -0.5
+		//the ideal value now is -0.5
 		else if(reward==OUT_OF_BOUNDS){
 			target_value=reward;
 		}
@@ -96,16 +107,10 @@ void actor::learn(int verbose){
 
 		if(reward != OUT_OF_BOUNDS)
 			move(next_state, (random_state.second + 2)%4); //reversing the move to get previous state
+								       
 		/*
 		 *debugging
 		 */
-		//for seeing if model learns boundary 
-		//if(reward == COMPLETION_REWARD)
-			//verbose = 1;
-
-		//if(next_state.compressed_state == INTERESTING_STATE.compressed_state){ //checking if state is interesting
-			//verbose = 1;
-		//}
 		if(verbose){ 
 			dout << "---learning state---\n";
 			dout << "STATE\n";
@@ -136,18 +141,14 @@ void actor::learn(int verbose){
 			dout << '\n';
 			dout << "---learnt state---\n\n";
 		}
-		//this line is for testing the interesting states
-		//verbose = 0;
-		
-		//this line is for testing if model learns the boundaries
-		//if(reward==COMPLETION_REWARD){
-			//verbose = 0; 
-		//}
 	}
 	if(verbose)dout<< "------learnt all states--------\n\n";
 }
 
 void actor::update_target(){
+	/*
+	 *update the target weights to the current actor weights
+	 */
 	this->target_net=this->actor_net;
 	return;
 }
@@ -213,9 +214,9 @@ void actor::print_target_weights(){
 
 
 int EpsilonGreedy(const vector<float> &q_values, float epsilon, int verbose){ //const vector<int> &action_space){
-	//srand(2); //initializing seed	
 	if(static_cast<float>(rand())/static_cast<float>(RAND_MAX) <= epsilon) //random action
 		return rand()%4;
+	//debug
 	if(verbose)dout << "\nmaking greedy action!\n";
 	
 	return static_cast<int>(max_element(q_values.begin(), q_values.end())-q_values.begin());
@@ -223,15 +224,9 @@ int EpsilonGreedy(const vector<float> &q_values, float epsilon, int verbose){ //
 
 vector<float> normalize(const state &some_state){
 	vector<float> normalized_output;
-	int cell_length = static_cast<int>(pow(LAYER_SIZES.front(), 0.5));
-	for(int i=0;i<cell_length;i++){
-		int cell_value = some_state.compressed_state[i]-'A';
-		for(int j=0;j<cell_length;j++){
-			if(j == cell_value)
-				normalized_output.push_back(1.0f);	
-			else
-				normalized_output.push_back(0.0f);	
-		}
+
+	for(const auto cell: some_state.compressed_state){
+		normalized_output.push_back((static_cast<float>(cell-'A') - 7.5f)/7.5f);
 	}
 	return normalized_output;
 }

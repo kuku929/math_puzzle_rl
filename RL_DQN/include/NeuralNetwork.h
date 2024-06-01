@@ -25,15 +25,16 @@ struct Network{
 	Network(vector<size_t> &l, vector<string> &activ_func, vector<vector<float>> &w,vector<vector<float>> &b); 
 	Network& operator=(const Network&) = default;
 	
-	vector<float> predict(const vector<float> &input);
+	vector<float> predict(const vector<float> &input); //does one forward pass
 
-	void fit(const vector<float> &input, const vector<float> &true_output, const float learning_rate, const float grad_decay, int verbose, int optimize);
+	void fit(const vector<float> &input, const vector<float> &true_output, const float learning_rate, const float grad_decay, int verbose, int optimize); //does one backward pass 
 
 };
 
+//activation function implementations
 float sigmoid(float weighted_sum);
 float ReLU(float weighted_sum);
 float Leaky(float weighted_sum);
 float Linear(float weighted_sum);
-float Fdash(float output, string activation_function); 
-void beautiful_print(const vector<float> &input, vector<float> &hidden_weighted_sum, vector<float> &hidden_output, vector<float> &output_weighted_sum, vector<float> &output,vector<vector<float>> weights, vector<vector<float>> bias);
+
+float Fdash(float output, string activation_function); //finds derivative of activation function 
